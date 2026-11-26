@@ -80,28 +80,41 @@
         .hstat .lbl{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:.3rem;display:block}
         .hstat+.hstat{border-left:1px solid var(--border);padding-left:2.4rem}
         .hero-visual{position:relative;perspective:1100px}
-        .panel-card{position:relative;background:linear-gradient(160deg,rgba(35,48,75,.92),rgba(15,23,42,.88));border:1px solid var(--border2);border-radius:26px;padding:1.7rem;backdrop-filter:blur(16px);box-shadow:var(--shadow);transform:rotateY(-7deg) rotateX(2deg);animation:float 9s ease-in-out infinite}
-        .panel-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.4rem}
+        .panel-card{position:relative;background:linear-gradient(160deg,rgba(35,48,75,.92),rgba(15,23,42,.88));border:1px solid var(--border2);border-radius:26px;padding:1.45rem;backdrop-filter:blur(16px);box-shadow:var(--shadow);transform:rotateY(-4deg) rotateX(1.5deg);transition:transform .45s cubic-bezier(.16,1,.3,1),border-color .35s}
+        .panel-card:hover{transform:none;border-color:rgba(34,211,238,.4)}
+        .panel-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:.9rem}
         .panel-title{font-family:var(--font-mono);font-size:.72rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
         .live{display:inline-flex;align-items:center;gap:.4rem;font-family:var(--font-mono);font-size:.66rem;color:var(--emerald)}
         .live i{width:7px;height:7px;border-radius:50%;background:var(--emerald);box-shadow:0 0 0 0 rgba(52,211,153,.5);animation:ping 1.8s infinite}
-        .metric{margin-bottom:1.1rem}
-        .metric-head{display:flex;justify-content:space-between;margin-bottom:.45rem;font-size:.82rem}
+        /* ESCENARIO 3D DEPORTIVO INTERACTIVO */
+        .car3d-stage{position:relative;height:268px;border-radius:20px;background:radial-gradient(ellipse at 50% 60%,rgba(34,211,238,.18),rgba(15,23,42,.88) 54%,rgba(5,8,16,.98) 100%);border:1px solid rgba(148,163,184,.2);box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 18px 40px -20px rgba(2,6,23,.9);overflow:hidden;margin-bottom:1rem;cursor:grab;user-select:none;touch-action:none}
+        .car3d-stage:active{cursor:grabbing}
+        .car3d-stage canvas{width:100%!important;height:100%!important;display:block}
+        html[data-theme="light"] .car3d-stage canvas{filter:invert(1) hue-rotate(180deg)}
+        .car3d-hud-top{position:absolute;top:11px;left:12px;right:12px;display:flex;justify-content:space-between;align-items:center;pointer-events:none;z-index:2;gap:.5rem}
+        .car3d-rpm{font-family:var(--font-mono);font-size:.67rem;color:var(--cyan);background:rgba(7,11,20,.72);border:1px solid rgba(34,211,238,.28);padding:.28rem .65rem;border-radius:999px;backdrop-filter:blur(8px);transition:border-color .35s,color .35s,box-shadow .35s}
+        .car3d-rpm.boost{color:#fda4af;border-color:rgba(251,113,133,.5);box-shadow:0 0 18px rgba(251,113,133,.25)}
+        .car3d-hint{font-family:var(--font-mono);font-size:.61rem;color:var(--muted);background:rgba(7,11,20,.64);border:1px solid rgba(148,163,184,.14);padding:.25rem .58rem;border-radius:999px;backdrop-filter:blur(6px)}
+        .metric{margin-bottom:.85rem}
+        .metric-head{display:flex;justify-content:space-between;margin-bottom:.38rem;font-size:.8rem}
         .metric-head .m-name{color:var(--muted)}
-        .metric-head .m-val{font-family:var(--font-mono);font-size:.78rem}
-        .mtrack{height:8px;background:rgba(148,163,184,.12);border-radius:99px;overflow:hidden}
-        .mfill{height:100%;border-radius:99px;animation:fill 2.4s cubic-bezier(.16,1,.3,1) forwards}
+        .metric-head .m-val{font-family:var(--font-mono);font-size:.76rem;transition:.3s}
+        .mtrack{height:7px;background:rgba(148,163,184,.12);border-radius:99px;overflow:hidden}
+        .mfill{height:100%;border-radius:99px;transition:width .5s cubic-bezier(.16,1,.3,1);animation:fill 2.4s cubic-bezier(.16,1,.3,1) forwards}
         @keyframes fill{from{width:0}}
-        .radar{display:grid;place-items:center;height:150px;margin-top:.4rem;position:relative}
-        .gauge{width:118px;height:118px;border-radius:50%;background:conic-gradient(from -90deg,#6366f1 0deg,#22d3ee 130deg,#34d399 215deg,rgba(148,163,184,.12) 215deg 360deg);display:grid;place-items:center;position:relative}
-        .gauge::before{content:"";position:absolute;inset:9px;border-radius:50%;background:var(--surface)}
-        .gauge b{position:relative;z-index:1;font-family:var(--font-display);font-weight:700;font-size:1.65rem}
-        .gauge small{display:block;font-family:var(--font-mono);font-size:.62rem;color:var(--muted);text-align:center;font-weight:400}
-        .float-chip{position:absolute;font-family:var(--font-mono);font-size:.68rem;background:rgba(15,23,42,.92);border:1px solid var(--border2);border-radius:12px;padding:.55rem .85rem;backdrop-filter:blur(10px);box-shadow:0 14px 34px -14px rgba(2,6,23,.85);display:flex;align-items:center;gap:.5rem}
-        .float-chip i{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-        .fc-1{top:-22px;left:-30px;animation:float 7s ease-in-out infinite}
-        .fc-2{bottom:-20px;right:-26px;animation:float 9s ease-in-out -3s infinite}
-        .fc-3{top:38%;right:-38px;animation:float 8s ease-in-out -5s infinite}
+        .radar-mini{display:flex;align-items:center;justify-content:space-between;gap:.9rem;margin-top:.6rem;padding-top:.75rem;border-top:1px solid var(--border)}
+        .gauge{width:64px;height:64px;border-radius:50%;background:conic-gradient(from -90deg,#6366f1 0deg,#22d3ee 130deg,#34d399 310deg,rgba(148,163,184,.12) 310deg 360deg);display:grid;place-items:center;position:relative;flex-shrink:0}
+        .gauge::before{content:"";position:absolute;inset:6px;border-radius:50%;background:var(--surface)}
+        .gauge b{position:relative;z-index:1;font-family:var(--font-display);font-weight:700;font-size:1.1rem}
+        .radar-info{flex:1;min-width:0}
+        .radar-info strong{display:block;font-family:var(--font-display);font-size:.88rem;color:var(--text)}
+        .radar-info span{font-family:var(--font-mono);font-size:.68rem;color:var(--muted)}
+        .float-chip{position:absolute;font-family:var(--font-mono);font-size:.68rem;background:rgba(15,23,42,.92);border:1px solid var(--border2);border-radius:12px;padding:.5rem .8rem;backdrop-filter:blur(10px);box-shadow:0 14px 34px -14px rgba(2,6,23,.85);display:flex;align-items:center;gap:.5rem;cursor:pointer;transition:transform .25s,border-color .25s;z-index:5}
+        .float-chip:hover{transform:scale(1.06)!important;border-color:var(--cyan)}
+        .float-chip i{width:8px;height:8px;border-radius:50%;flex-shrink:0;background:var(--emerald)}
+        .fc-1{top:-18px;left:-24px;animation:float 7s ease-in-out infinite}
+        .fc-2{bottom:-18px;right:-20px;animation:float 9s ease-in-out -3s infinite}
+        .fc-3{top:34%;right:-32px;animation:float 8s ease-in-out -5s infinite}
         .fc-2 i{background:#fb7185}.fc-3 i{background:#fbbf24}
 /* MARQUEE */
         .marquee{overflow:hidden;border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--bg2);padding:.95rem 0}
@@ -254,34 +267,45 @@
             </div>
         </div>
 
-        <!-- PANEL DE TELEMETRÍA -->
+        <!-- PANEL DE TELEMETRÍA CON DEPORTIVO 3D INTERACTIVO -->
         <div class="hero-visual reveal in d2">
             <div class="panel-card">
                 <div class="panel-top">
-                    <span class="panel-title">Diagnóstico en vivo</span>
+                    <span class="panel-title">Diagnóstico en vivo · OBD2 3D</span>
                     <span class="live"><i></i> EN LÍNEA</span>
                 </div>
+
+                <div class="car3d-stage" id="car3dStage" title="Arrastra para rotar el superdeportivo en 360°">
+                    <div class="car3d-hud-top">
+                        <span class="car3d-rpm" id="car3dRpm">⚡ 2,240 RPM · 72 km/h</span>
+                        <span class="car3d-hint">↻ Arrastra 360°</span>
+                    </div>
+                    <canvas id="car3dCanvas"></canvas>
+                </div>
+
                 <div class="metric">
-                    <div class="metric-head"><span class="m-name">Temperatura motor</span><span class="m-val" style="color:#22d3ee">87°C</span></div>
-                    <div class="mtrack"><div class="mfill" style="width:38%;background:linear-gradient(90deg,#6366f1,#22d3ee)"></div></div>
+                    <div class="metric-head"><span class="m-name">Temperatura motor (ECT)</span><span class="m-val" id="valTemp" style="color:#22d3ee">87°C</span></div>
+                    <div class="mtrack"><div class="mfill" id="barTemp" style="width:38%;background:linear-gradient(90deg,#6366f1,#22d3ee)"></div></div>
                 </div>
                 <div class="metric">
-                    <div class="metric-head"><span class="m-name">Presión de aceite</span><span class="m-val" style="color:#34d399">42 psi</span></div>
-                    <div class="mtrack"><div class="mfill" style="width:55%;background:linear-gradient(90deg,#22d3ee,#34d399);animation-delay:.3s"></div></div>
+                    <div class="metric-head"><span class="m-name">Presión de aceite (OIL)</span><span class="m-val" id="valOil" style="color:#34d399">42 psi</span></div>
+                    <div class="mtrack"><div class="mfill" id="barOil" style="width:55%;background:linear-gradient(90deg,#22d3ee,#34d399);animation-delay:.3s"></div></div>
                 </div>
                 <div class="metric">
-                    <div class="metric-head"><span class="m-name">Nivel de desgaste</span><span class="m-val" style="color:#fbbf24">64%</span></div>
-                    <div class="mtrack"><div class="mfill" style="width:64%;background:linear-gradient(90deg,#f59e0b,#fbbf24);animation-delay:.6s"></div></div>
+                    <div class="metric-head"><span class="m-name">Nivel de desgaste OBD2</span><span class="m-val" id="valWear" style="color:#fbbf24">32%</span></div>
+                    <div class="mtrack"><div class="mfill" id="barWear" style="width:32%;background:linear-gradient(90deg,#34d399,#fbbf24);animation-delay:.6s"></div></div>
                 </div>
-                <div class="radar">
-                    <div class="gauge">
-                        <b>92<small>/ 100 · estado general</small></b>
+                <div class="radar-mini">
+                    <div class="gauge"><b id="valScore">92</b></div>
+                    <div class="radar-info">
+                        <strong id="focusLabel">Escaneo Integral Activo</strong>
+                        <span id="focusDesc">Arrastra el deportivo en 360° o toca un sensor flotante</span>
                     </div>
                 </div>
             </div>
-            <div class="float-chip fc-1"><i></i>Motor — OK</div>
-            <div class="float-chip fc-2"><i></i>Sensor O2 — Falla</div>
-            <div class="float-chip fc-3"><i></i>Frenos — Revisar</div>
+            <div class="float-chip fc-1" data-zone="motor"><i></i>Motor — OK</div>
+            <div class="float-chip fc-2" data-zone="escape"><i></i>Sensor O2 — Revisar</div>
+            <div class="float-chip fc-3" data-zone="frenos"><i></i>Frenos — Óptimo</div>
         </div>
     </section>
 
@@ -464,6 +488,748 @@
                 });
             }, { threshold: 0.5 });
             document.querySelectorAll('.contar').forEach(function (el) { cio.observe(el); });
+        })();
+    </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        (function () {
+            const stage = document.getElementById('car3dStage');
+            const canvas = document.getElementById('car3dCanvas');
+            if (!stage || !canvas) return;
+
+            const rpmEl = document.getElementById('car3dRpm');
+            const valTemp = document.getElementById('valTemp');
+            const barTemp = document.getElementById('barTemp');
+            const valOil = document.getElementById('valOil');
+            const barOil = document.getElementById('barOil');
+            const valWear = document.getElementById('valWear');
+            const barWear = document.getElementById('barWear');
+            const valScore = document.getElementById('valScore');
+            const focusLabel = document.getElementById('focusLabel');
+            const focusDesc = document.getElementById('focusDesc');
+
+            // Paleta automotriz metálica que va cambiando sola de forma suave
+            const paintPalette = [
+                { paint: 0xe11d48, accent: 0x38bdf8, caliper: 0xfbbf24 }, // Rojo Corsa + Cian
+                { paint: 0x2563eb, accent: 0x22d3ee, caliper: 0xf43f5e }, // Azul Zafiro GT
+                { paint: 0x0891b2, accent: 0x67e8f9, caliper: 0xfacc15 }, // Cian Atlántico
+                { paint: 0x059669, accent: 0x34d399, caliper: 0xf59e0b }, // Verde Esmeralda Racing
+                { paint: 0xd97706, accent: 0xfbbf24, caliper: 0xef4444 }, // Ámbar Solar McLaren
+                { paint: 0x7c3aed, accent: 0xa78bfa, caliper: 0x22d3ee }, // Violeta Medianoche
+                { paint: 0xe2e8f0, accent: 0x38bdf8, caliper: 0xe11d48 }  // Blanco Perla Titanio
+            ];
+
+            // Respaldo 2D estilizado si el CDN de Three.js no está disponible sin red
+            if (typeof THREE === 'undefined') {
+                const ctx = canvas.getContext('2d');
+                let tick = 0;
+                function drawFallback() {
+                    canvas.width = stage.clientWidth;
+                    canvas.height = stage.clientHeight;
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    tick += 0.03;
+                    const idx = Math.floor(tick / 4) % paintPalette.length;
+                    const hex = '#' + paintPalette[idx].paint.toString(16).padStart(6, '0');
+                    const cx = canvas.width / 2, cy = canvas.height / 2 + 18;
+                    ctx.save();
+                    ctx.translate(cx, cy + Math.sin(tick * 2) * 2.5);
+                    ctx.fillStyle = hex;
+                    ctx.beginPath();
+                    ctx.moveTo(-125, 14); ctx.lineTo(-108, -4); ctx.lineTo(-42, -28);
+                    ctx.lineTo(32, -30); ctx.lineTo(96, -8); ctx.lineTo(122, 12);
+                    ctx.closePath(); ctx.fill();
+                    ctx.fillStyle = '#0f172a';
+                    [-72, 72].forEach(function (wx) {
+                        ctx.beginPath(); ctx.arc(wx, 16, 20, 0, Math.PI * 2); ctx.fill();
+                    });
+                    ctx.restore();
+                    requestAnimationFrame(drawFallback);
+                }
+                drawFallback();
+                return;
+            }
+
+            const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+            renderer.outputEncoding = THREE.sRGBEncoding;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.18;
+
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(33, 1, 0.1, 100);
+            camera.position.set(4.55, 1.88, 5.05);
+            camera.lookAt(0, 0.42, 0);
+
+            // Entorno de reflejos de estudio automotriz generado proceduralmente (sin archivos externos)
+            try {
+                const envCanvas = document.createElement('canvas');
+                envCanvas.width = 512;
+                envCanvas.height = 256;
+                const ectx = envCanvas.getContext('2d');
+                const bgGrad = ectx.createLinearGradient(0, 0, 0, 256);
+                bgGrad.addColorStop(0.0, '#0f172a');
+                bgGrad.addColorStop(0.42, '#1e293b');
+                bgGrad.addColorStop(0.50, '#020617');
+                bgGrad.addColorStop(1.0, '#020617');
+                ectx.fillStyle = bgGrad;
+                ectx.fillRect(0, 0, 512, 256);
+                // Franjas de luz softbox de estudio para reflejos nítidos sobre la carrocería
+                ectx.fillStyle = 'rgba(255,255,255,0.92)';
+                ectx.fillRect(40, 22, 180, 20);
+                ectx.fillRect(290, 30, 175, 16);
+                ectx.fillStyle = 'rgba(56,189,248,0.65)';
+                ectx.fillRect(20, 68, 210, 10);
+                ectx.fillStyle = 'rgba(167,139,250,0.55)';
+                ectx.fillRect(280, 74, 200, 10);
+
+                const envTex = new THREE.CanvasTexture(envCanvas);
+                envTex.mapping = THREE.EquirectangularReflectionMapping;
+                envTex.encoding = THREE.sRGBEncoding;
+                const pmrem = new THREE.PMREMGenerator(renderer);
+                pmrem.compileEquirectangularShader();
+                scene.environment = pmrem.fromEquirectangular(envTex).texture;
+                envTex.dispose();
+                pmrem.dispose();
+            } catch (err) {
+                // Si el navegador limita PMREM, las luces puntuales mantienen el brillo
+            }
+
+            // Iluminación multicapa de showroom
+            scene.add(new THREE.HemisphereLight(0xe0f2fe, 0x090d16, 0.85));
+            const keyLight = new THREE.DirectionalLight(0xffffff, 1.55);
+            keyLight.position.set(5.5, 9.5, 6.5);
+            scene.add(keyLight);
+
+            const fillLight = new THREE.DirectionalLight(0xbae6fd, 0.75);
+            fillLight.position.set(-6.5, 4.5, 4.0);
+            scene.add(fillLight);
+
+            const rimCyan = new THREE.PointLight(0x22d3ee, 1.6, 15);
+            rimCyan.position.set(-5.2, 2.6, -4.5);
+            scene.add(rimCyan);
+
+            const rimViolet = new THREE.PointLight(0x8b5cf6, 1.35, 15);
+            rimViolet.position.set(4.8, 2.8, -4.8);
+            scene.add(rimViolet);
+
+            const root = new THREE.Group();
+            scene.add(root);
+
+            // Base de exhibición oscura + anillos holográficos OBD2
+            const stageDisc = new THREE.Mesh(
+                new THREE.CylinderGeometry(2.38, 2.48, 0.05, 64),
+                new THREE.MeshStandardMaterial({ color: 0x070b14, metalness: 0.75, roughness: 0.22 })
+            );
+            stageDisc.position.y = -0.025;
+            root.add(stageDisc);
+
+            const outerRingMat = new THREE.MeshBasicMaterial({ color: 0x22d3ee, side: THREE.DoubleSide, transparent: true, opacity: 0.65 });
+            const holoRing = new THREE.Mesh(new THREE.RingGeometry(2.34, 2.41, 72), outerRingMat);
+            holoRing.rotation.x = -Math.PI / 2;
+            holoRing.position.y = 0.008;
+            root.add(holoRing);
+
+            const innerRingMat = new THREE.MeshBasicMaterial({ color: 0x6366f1, side: THREE.DoubleSide, transparent: true, opacity: 0.35 });
+            const innerRing = new THREE.Mesh(new THREE.RingGeometry(1.82, 1.85, 64), innerRingMat);
+            innerRing.rotation.x = -Math.PI / 2;
+            innerRing.position.y = 0.007;
+            root.add(innerRing);
+
+            const gridHelper = new THREE.PolarGridHelper(2.3, 12, 5, 64, 0x1e3a8a, 0x0e7490);
+            gridHelper.position.y = 0.004;
+            if (gridHelper.material) {
+                gridHelper.material.transparent = true;
+                gridHelper.material.opacity = 0.38;
+            }
+            root.add(gridHelper);
+
+            // Sombra suave bajo el chasis
+            const shadowCanvas = document.createElement('canvas');
+            shadowCanvas.width = 128; shadowCanvas.height = 128;
+            const sctx = shadowCanvas.getContext('2d');
+            const sGrad = sctx.createRadialGradient(64, 64, 10, 64, 64, 62);
+            sGrad.addColorStop(0, 'rgba(0,0,0,0.88)');
+            sGrad.addColorStop(1, 'rgba(0,0,0,0)');
+            sctx.fillStyle = sGrad;
+            sctx.fillRect(0, 0, 128, 128);
+            const shadowPlane = new THREE.Mesh(
+                new THREE.PlaneGeometry(4.6, 2.35),
+                new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(shadowCanvas), transparent: true, depthWrite: false })
+            );
+            shadowPlane.rotation.x = -Math.PI / 2;
+            shadowPlane.position.y = 0.011;
+            root.add(shadowPlane);
+
+            // Grupo suspendido del superdeportivo
+            const car = new THREE.Group();
+            root.add(car);
+
+            // Materiales automotrices de alto detalle (barniz clearcoat real)
+            const bodyMat = new THREE.MeshPhysicalMaterial({
+                color: new THREE.Color(paintPalette[0].paint),
+                metalness: 0.72,
+                roughness: 0.18,
+                clearcoat: 1.0,
+                clearcoatRoughness: 0.06
+            });
+            const carbonMat = new THREE.MeshStandardMaterial({ color: 0x111827, metalness: 0.45, roughness: 0.42 });
+            const darkMeshMat = new THREE.MeshStandardMaterial({ color: 0x050811, metalness: 0.25, roughness: 0.78 });
+            const glassMat = new THREE.MeshPhysicalMaterial({
+                color: 0x071022,
+                metalness: 0.15,
+                roughness: 0.05,
+                clearcoat: 1.0,
+                transparent: true,
+                opacity: 0.84
+            });
+            const alloyMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.92, roughness: 0.16 });
+            const rotorMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.82, roughness: 0.28 });
+            const tireMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.08, roughness: 0.86 });
+            const interiorMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.2, roughness: 0.65 });
+            const caliperMat = new THREE.MeshStandardMaterial({ color: paintPalette[0].caliper, metalness: 0.55, roughness: 0.25 });
+            const accentTrimMat = new THREE.MeshBasicMaterial({ color: paintPalette[0].accent });
+
+            // 1. Monocasco central esculpido (nariz afilada, capó bajo, cola fastback)
+            const coreShape = new THREE.Shape();
+            coreShape.moveTo(-2.14, 0.20);
+            coreShape.quadraticCurveTo(-2.18, 0.34, -2.02, 0.43);
+            coreShape.quadraticCurveTo(-1.52, 0.63, -0.84, 0.68);
+            coreShape.lineTo(-0.74, 0.69);
+            coreShape.lineTo(0.85, 0.74);
+            coreShape.quadraticCurveTo(1.52, 0.78, 1.98, 0.68);
+            coreShape.lineTo(2.08, 0.48);
+            coreShape.lineTo(2.02, 0.25);
+            coreShape.lineTo(-2.14, 0.20);
+
+            const coreGeo = new THREE.ExtrudeGeometry(coreShape, {
+                depth: 1.38, bevelEnabled: true, bevelSegments: 6, steps: 1, bevelSize: 0.09, bevelThickness: 0.09
+            });
+            coreGeo.translate(0, 0, -0.69);
+            car.add(new THREE.Mesh(coreGeo, bodyMat));
+
+            // 2. Guardabarros musculosos delanteros y traseros (ensanchados estilo superdeportivo)
+            const frontFenderShape = new THREE.Shape();
+            frontFenderShape.moveTo(-1.98, 0.22);
+            frontFenderShape.quadraticCurveTo(-1.90, 0.50, -1.32, 0.66);
+            frontFenderShape.quadraticCurveTo(-0.82, 0.68, -0.58, 0.52);
+            frontFenderShape.lineTo(-0.62, 0.22);
+            frontFenderShape.closePath();
+            const fFenderGeo = new THREE.ExtrudeGeometry(frontFenderShape, {
+                depth: 0.22, bevelEnabled: true, bevelSegments: 5, steps: 1, bevelSize: 0.06, bevelThickness: 0.07
+            });
+
+            const rearFenderShape = new THREE.Shape();
+            rearFenderShape.moveTo(0.32, 0.24);
+            rearFenderShape.quadraticCurveTo(0.55, 0.68, 1.22, 0.77);
+            rearFenderShape.quadraticCurveTo(1.78, 0.76, 2.02, 0.54);
+            rearFenderShape.lineTo(1.98, 0.25);
+            rearFenderShape.closePath();
+            const rFenderGeo = new THREE.ExtrudeGeometry(rearFenderShape, {
+                depth: 0.25, bevelEnabled: true, bevelSegments: 5, steps: 1, bevelSize: 0.07, bevelThickness: 0.08
+            });
+
+            [-1, 1].forEach(function (side) {
+                const ff = new THREE.Mesh(fFenderGeo, bodyMat);
+                ff.position.z = side > 0 ? 0.66 : -0.88;
+                car.add(ff);
+
+                const rf = new THREE.Mesh(rFenderGeo, bodyMat);
+                rf.position.z = side > 0 ? 0.65 : -0.90;
+                car.add(rf);
+            });
+
+            // Pasos de rueda oscuros para dar profundidad real alrededor de cada llanta
+            [[-1.28, 0.34, 0.78], [-1.28, 0.34, -0.78], [1.26, 0.36, 0.79], [1.26, 0.36, -0.79]].forEach(function (wp, idx) {
+                const rWell = idx < 2 ? 0.385 : 0.405;
+                const well = new THREE.Mesh(new THREE.CylinderGeometry(rWell, rWell, 0.34, 28), darkMeshMat);
+                well.rotation.x = Math.PI / 2;
+                well.position.set(wp[0], wp[1], wp[2]);
+                car.add(well);
+            });
+
+            // 3. Cúpula de cristal tipo gota + techo + interior deportivo visible
+            const canopyShape = new THREE.Shape();
+            canopyShape.moveTo(-0.88, 0.67);
+            canopyShape.quadraticCurveTo(-0.42, 1.09, 0.12, 1.11);
+            canopyShape.quadraticCurveTo(0.76, 1.08, 1.32, 0.76);
+            canopyShape.lineTo(-0.88, 0.67);
+            const canopyGeo = new THREE.ExtrudeGeometry(canopyShape, {
+                depth: 1.12, bevelEnabled: true, bevelSegments: 5, steps: 1, bevelSize: 0.07, bevelThickness: 0.08
+            });
+            canopyGeo.translate(0, 0, -0.56);
+            car.add(new THREE.Mesh(canopyGeo, glassMat));
+
+            // Franja central de techo en color carrocería / carbono
+            const roofCap = new THREE.Mesh(new THREE.BoxGeometry(0.66, 0.045, 0.96), carbonMat);
+            roofCap.position.set(0.14, 1.155, 0);
+            roofCap.rotation.z = -0.04;
+            car.add(roofCap);
+
+            // Asientos deportivos tipo cubo y volante visibles tras el parabrisas
+            [-0.28, 0.28].forEach(function (zSeat) {
+                const seatBack = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.42, 0.34), interiorMat);
+                seatBack.position.set(0.18, 0.78, zSeat);
+                seatBack.rotation.z = 0.28;
+                car.add(seatBack);
+                const headrest = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.15, 0.20), caliperMat);
+                headrest.position.set(0.24, 0.99, zSeat);
+                headrest.rotation.z = 0.24;
+                car.add(headrest);
+            });
+            const steeringWheel = new THREE.Mesh(new THREE.TorusGeometry(0.095, 0.018, 10, 20), carbonMat);
+            steeringWheel.rotation.y = Math.PI / 2;
+            steeringWheel.rotation.x = 0.35;
+            steeringWheel.position.set(-0.34, 0.80, 0.28);
+            car.add(steeringWheel);
+
+            // 4. Detalles de capó, parrilla frontal, splitter con canards y faldones
+            const hoodVent = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.03, 0.68), darkMeshMat);
+            hoodVent.position.set(-1.42, 0.61, 0);
+            hoodVent.rotation.z = 0.16;
+            car.add(hoodVent);
+
+            [-0.36, 0.36].forEach(function (zCrease) {
+                const crease = new THREE.Mesh(new THREE.BoxGeometry(0.88, 0.025, 0.035), bodyMat);
+                crease.position.set(-1.38, 0.62, zCrease);
+                crease.rotation.z = 0.15;
+                car.add(crease);
+            });
+
+            // Parrilla delantera agresiva + labio aerodinámico en carbono
+            const frontGrille = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.16, 1.46), darkMeshMat);
+            frontGrille.position.set(-2.14, 0.29, 0);
+            car.add(frontGrille);
+
+            const frontSplitter = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.042, 1.94), carbonMat);
+            frontSplitter.position.set(-2.04, 0.165, 0);
+            car.add(frontSplitter);
+
+            const splitterAccent = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.018, 1.90), accentTrimMat);
+            splitterAccent.position.set(-2.25, 0.172, 0);
+            car.add(splitterAccent);
+
+            // Canards laterales delanteros, tomas laterales, espejos y faldones
+            [-1, 1].forEach(function (side) {
+                const canard = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.025, 0.12), carbonMat);
+                canard.position.set(-2.04, 0.28, side * 0.92);
+                canard.rotation.z = 0.18;
+                canard.rotation.y = side * -0.22;
+                car.add(canard);
+
+                // Faldón lateral esculpido con aleta trasera
+                const skirt = new THREE.Mesh(new THREE.BoxGeometry(1.72, 0.055, 0.14), carbonMat);
+                skirt.position.set(-0.02, 0.18, side * 0.88);
+                car.add(skirt);
+
+                const skirtBlade = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.18, 0.03), carbonMat);
+                skirtBlade.position.set(0.76, 0.26, side * 0.93);
+                car.add(skirtBlade);
+
+                // Toma de aire lateral tras las puertas (refrigeración motor central)
+                const sideIntake = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.28, 0.12), darkMeshMat);
+                sideIntake.position.set(0.52, 0.50, side * 0.86);
+                sideIntake.rotation.y = side * 0.10;
+                car.add(sideIntake);
+
+                const intakeVane = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.025, 0.15), bodyMat);
+                intakeVane.position.set(0.52, 0.51, side * 0.88);
+                car.add(intakeVane);
+
+                // Espejos retrovisores aerodinámicos sobre brazo doble
+                const stalk = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.03, 0.16), carbonMat);
+                stalk.position.set(-0.56, 0.78, side * 0.74);
+                stalk.rotation.x = side * -0.28;
+                car.add(stalk);
+
+                const mirrorCap = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.075, 0.14), bodyMat);
+                mirrorCap.position.set(-0.54, 0.82, side * 0.85);
+                mirrorCap.rotation.y = side * -0.18;
+                car.add(mirrorCap);
+            });
+
+            // 5. Persiana trasera de motor V10 (louvers), difusor multialeta y alerón cuello de cisne
+            for (let lv = 0; lv < 5; lv++) {
+                const slat = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.022, 0.78), carbonMat);
+                slat.position.set(0.98 + lv * 0.155, 0.94 - lv * 0.038, 0);
+                slat.rotation.z = -0.22;
+                car.add(slat);
+            }
+
+            const rearDiffuser = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.17, 1.76), carbonMat);
+            rearDiffuser.position.set(1.98, 0.25, 0);
+            car.add(rearDiffuser);
+
+            [-0.68, -0.34, 0, 0.34, 0.68].forEach(function (zFin) {
+                const fin = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.19, 0.025), carbonMat);
+                fin.position.set(2.02, 0.24, zFin);
+                car.add(fin);
+            });
+
+            // Alerón trasero GT de cuello de cisne (swan-neck)
+            const wingDeck = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.042, 1.88), carbonMat);
+            wingDeck.position.set(1.92, 1.04, 0);
+            wingDeck.rotation.z = -0.10;
+            car.add(wingDeck);
+
+            [-0.44, 0.44].forEach(function (zNeck) {
+                const neck = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.30, 0.035), carbonMat);
+                neck.position.set(1.82, 0.90, zNeck);
+                neck.rotation.z = -0.24;
+                car.add(neck);
+            });
+            [-0.95, 0.95].forEach(function (zPlate) {
+                const plate = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.20, 0.028), bodyMat);
+                plate.position.set(1.93, 1.02, zPlate);
+                plate.rotation.z = -0.06;
+                car.add(plate);
+            });
+
+            // 6. Ópticas LED afiladas delanteras y barra LED continua trasera
+            const drlMat = new THREE.MeshBasicMaterial({ color: 0xe0f2fe });
+            const projMat = new THREE.MeshBasicMaterial({ color: 0x67e8f9 });
+            const tailMat = new THREE.MeshBasicMaterial({ color: 0xff1e4d });
+
+            [-1, 1].forEach(function (side) {
+                // Ceja LED diurna en búmeran
+                const drlMain = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.032, 0.26), drlMat);
+                drlMain.position.set(-1.98, 0.46, side * 0.68);
+                drlMain.rotation.z = 0.20;
+                drlMain.rotation.y = side * -0.28;
+                car.add(drlMain);
+
+                const drlSlash = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.028, 0.12), projMat);
+                drlSlash.position.set(-1.92, 0.44, side * 0.79);
+                drlSlash.rotation.z = 0.35;
+                car.add(drlSlash);
+
+                // Luz trasera lateral ensanchada
+                const tailPod = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.075, 0.44), tailMat);
+                tailPod.position.set(2.06, 0.60, side * 0.64);
+                car.add(tailPod);
+            });
+
+            // Barra LED trasera de ancho completo + tercera luz de freno superior
+            const tailCenterBar = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.036, 1.66), tailMat);
+            tailCenterBar.position.set(2.07, 0.61, 0);
+            car.add(tailCenterBar);
+
+            const thirdBrake = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.025, 0.52), tailMat);
+            thirdBrake.position.set(1.66, 0.84, 0);
+            car.add(thirdBrake);
+
+            // Iluminación activa del propio vehículo (automática)
+            const underglow = new THREE.PointLight(paintPalette[0].accent, 1.4, 4.4);
+            underglow.position.set(0, 0.14, 0);
+            car.add(underglow);
+
+            const tailGlow = new THREE.PointLight(0xff1e4d, 0.9, 3.2);
+            tailGlow.position.set(2.25, 0.55, 0);
+            car.add(tailGlow);
+
+            const frontBeam = new THREE.SpotLight(0xbae6fd, 1.9, 9.5, Math.PI / 5, 0.55, 1.1);
+            frontBeam.position.set(-2.05, 0.48, 0);
+            frontBeam.target.position.set(-6.0, 0.0, 0);
+            car.add(frontBeam);
+            car.add(frontBeam.target);
+
+            // 7. Cuádruple salida de escape en titanio con llamas bitono automáticas
+            const flames = [];
+            const flameOuterMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.0 });
+            const flameCoreMat = new THREE.MeshBasicMaterial({ color: 0xfef08a, transparent: true, opacity: 0.0 });
+
+            [-0.50, -0.34, 0.34, 0.50].forEach(function (zEx) {
+                const outerTip = new THREE.Mesh(new THREE.CylinderGeometry(0.062, 0.066, 0.18, 20), alloyMat);
+                outerTip.rotation.z = Math.PI / 2;
+                outerTip.position.set(2.12, 0.32, zEx);
+                car.add(outerTip);
+
+                const innerCore = new THREE.Mesh(new THREE.CylinderGeometry(0.048, 0.048, 0.19, 16), darkMeshMat);
+                innerCore.rotation.z = Math.PI / 2;
+                innerCore.position.set(2.125, 0.32, zEx);
+                car.add(innerCore);
+
+                const flameGroup = new THREE.Group();
+                flameGroup.position.set(2.22, 0.32, zEx);
+
+                const outerCone = new THREE.Mesh(new THREE.ConeGeometry(0.058, 0.42, 14), flameOuterMat);
+                outerCone.rotation.z = -Math.PI / 2;
+                outerCone.position.x = 0.16;
+                flameGroup.add(outerCone);
+
+                const innerCone = new THREE.Mesh(new THREE.ConeGeometry(0.032, 0.24, 12), flameCoreMat);
+                innerCone.rotation.z = -Math.PI / 2;
+                innerCone.position.x = 0.09;
+                flameGroup.add(innerCone);
+
+                car.add(flameGroup);
+                flames.push(flameGroup);
+            });
+
+            // 8. Ruedas deportivas de alto detalle (llanta ancha con hombro redondeado, rin 10 radios, disco y mordaza fija)
+            const wheels = [];
+            const wheelSpecs = [
+                { x: -1.28, y: 0.34, z: 0.84, r: 0.335, w: 0.26, side: 1 },
+                { x: -1.28, y: 0.34, z: -0.84, r: 0.335, w: 0.26, side: -1 },
+                { x: 1.26, y: 0.36, z: 0.86, r: 0.355, w: 0.30, side: 1 },
+                { x: 1.26, y: 0.36, z: -0.86, r: 0.355, w: 0.30, side: -1 }
+            ];
+
+            wheelSpecs.forEach(function (ws) {
+                const wGroup = new THREE.Group();
+                wGroup.position.set(ws.x, ws.y, ws.z);
+
+                const spinGroup = new THREE.Group();
+
+                // Banda de rodadura + hombros redondeados del neumático
+                const tread = new THREE.Mesh(new THREE.CylinderGeometry(ws.r, ws.r, ws.w * 0.82, 32), tireMat);
+                tread.rotation.x = Math.PI / 2;
+                spinGroup.add(tread);
+
+                [-1, 1].forEach(function (sh) {
+                    const shoulder = new THREE.Mesh(new THREE.TorusGeometry(ws.r - 0.042, 0.044, 12, 32), tireMat);
+                    shoulder.position.z = sh * (ws.w * 0.36);
+                    spinGroup.add(shoulder);
+                });
+
+                // Aro metálico exterior (lip del rin)
+                const rimLip = new THREE.Mesh(new THREE.TorusGeometry(ws.r * 0.72, 0.018, 10, 32), alloyMat);
+                rimLip.position.z = ws.side * (ws.w * 0.44);
+                spinGroup.add(rimLip);
+
+                // Disco de freno ventilado interno
+                const brakeDisc = new THREE.Mesh(new THREE.CylinderGeometry(ws.r * 0.58, ws.r * 0.58, 0.035, 28), rotorMat);
+                brakeDisc.rotation.x = Math.PI / 2;
+                brakeDisc.position.z = ws.side * 0.02;
+                spinGroup.add(brakeDisc);
+
+                // 10 radios deportivos en V + tuerca central monotuerca
+                const rimRadius = ws.r * 0.70;
+                for (let s = 0; s < 10; s++) {
+                    const ang = (s / 10) * Math.PI * 2 + (s % 2 === 0 ? 0.09 : -0.09);
+                    const spoke = new THREE.Mesh(new THREE.BoxGeometry(rimRadius * 0.96, 0.024, 0.026), alloyMat);
+                    spoke.position.set(
+                        Math.cos(ang) * (rimRadius * 0.48),
+                        Math.sin(ang) * (rimRadius * 0.48),
+                        ws.side * (ws.w * 0.40)
+                    );
+                    spoke.rotation.z = ang;
+                    spinGroup.add(spoke);
+                }
+
+                const centerHub = new THREE.Mesh(new THREE.CylinderGeometry(0.068, 0.068, 0.06, 20), carbonMat);
+                centerHub.rotation.x = Math.PI / 2;
+                centerHub.position.z = ws.side * (ws.w * 0.42);
+                spinGroup.add(centerHub);
+
+                const centerLock = new THREE.Mesh(new THREE.CylinderGeometry(0.036, 0.036, 0.075, 16), caliperMat);
+                centerLock.rotation.x = Math.PI / 2;
+                centerLock.position.z = ws.side * (ws.w * 0.43);
+                spinGroup.add(centerLock);
+
+                wGroup.add(spinGroup);
+
+                // Mordaza de freno deportiva fija (no gira con los radios)
+                const caliper = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.19, 0.085), caliperMat);
+                caliper.position.set(ws.x < 0 ? 0.13 : -0.14, 0.06, ws.side * 0.03);
+                caliper.rotation.z = ws.x < 0 ? -0.35 : 0.35;
+                wGroup.add(caliper);
+
+                car.add(wGroup);
+                wheels.push(spinGroup);
+            });
+
+            // Balizas 3D sutiles para los chips de diagnóstico
+            function crearBaliza(colorHex, pos) {
+                const g = new THREE.Group();
+                g.position.set(pos[0], pos[1], pos[2]);
+                const core = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.055, 16, 16),
+                    new THREE.MeshBasicMaterial({ color: colorHex })
+                );
+                const halo = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.105, 16, 16),
+                    new THREE.MeshBasicMaterial({ color: colorHex, transparent: true, opacity: 0.28 })
+                );
+                g.add(core);
+                g.add(halo);
+                car.add(g);
+                return g;
+            }
+            const beacons = {
+                motor: crearBaliza(0x34d399, [0.85, 0.92, 0]),
+                escape: crearBaliza(0xfb7185, [2.05, 0.44, 0.42]),
+                frenos: crearBaliza(0xfbbf24, [-1.28, 0.36, 0.98])
+            };
+
+            // Interacción 360° arrastrando el vehículo y clic en los sensores flotantes
+            let dragging = false;
+            let prevX = 0, prevY = 0;
+            let targetRotY = -0.58;
+            let currentRotY = -2.55; // giro fluido de bienvenida al cargar
+            let targetRotX = 0.045;
+            let currentRotX = 0.045;
+            let autoSpin = true;
+            let resumeTimer = null;
+
+            function pausarAutoGiro() {
+                autoSpin = false;
+                if (resumeTimer) clearTimeout(resumeTimer);
+                resumeTimer = setTimeout(function () {
+                    autoSpin = true;
+                    activeBeacon = null;
+                }, 4200);
+            }
+
+            stage.addEventListener('pointerdown', function (e) {
+                dragging = true;
+                prevX = e.clientX;
+                prevY = e.clientY;
+                pausarAutoGiro();
+            });
+            window.addEventListener('pointermove', function (e) {
+                if (!dragging) return;
+                const dx = e.clientX - prevX;
+                const dy = e.clientY - prevY;
+                prevX = e.clientX;
+                prevY = e.clientY;
+                targetRotY += dx * 0.011;
+                targetRotX = Math.max(-0.18, Math.min(0.30, targetRotX + dy * 0.0055));
+            });
+            window.addEventListener('pointerup', function () { dragging = false; });
+
+            const zonasInfo = {
+                motor: { ang: -2.25, titulo: 'Motor V10 & Sensor ECT — OK', desc: 'Refrigerante estable · Flujo MAF 4.4 g/s en rango nominal' },
+                escape: { ang: 2.38, titulo: 'Escape & Sensor O2 — Revisar', desc: 'Banco 1 Sensor 1: 0.78V · Monitoreo de mezcla activa' },
+                frenos: { ang: -1.32, titulo: 'Frenos Cerámicos ABS — Óptimo', desc: 'Pastillas al 86% · Presión hidráulica equilibrada' }
+            };
+            let activeBeacon = null;
+
+            document.querySelectorAll('.float-chip[data-zone]').forEach(function (chip) {
+                chip.addEventListener('click', function () {
+                    const z = chip.dataset.zone;
+                    const info = zonasInfo[z];
+                    if (!info) return;
+                    pausarAutoGiro();
+                    targetRotY = info.ang;
+                    activeBeacon = z;
+                    focusLabel.textContent = info.titulo;
+                    focusDesc.textContent = info.desc;
+                });
+            });
+
+            function redimensionar() {
+                const w = stage.clientWidth || 420;
+                const h = stage.clientHeight || 268;
+                renderer.setSize(w, h, false);
+                camera.aspect = w / h;
+                camera.updateProjectionMatrix();
+            }
+            window.addEventListener('resize', redimensionar);
+            redimensionar();
+
+            // Variables para transiciones automáticas suaves (color, aceleración turbo y luces)
+            const tmpPaintA = new THREE.Color();
+            const tmpPaintB = new THREE.Color();
+            const tmpAccentA = new THREE.Color();
+            const tmpAccentB = new THREE.Color();
+            const tmpCaliperA = new THREE.Color();
+            const tmpCaliperB = new THREE.Color();
+            let lastHudUpdate = 0;
+            const clockStart = performance.now();
+
+            function smoothstep(edge0, edge1, x) {
+                const k = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
+                return k * k * (3 - 2 * k);
+            }
+
+            function animar(now) {
+                requestAnimationFrame(animar);
+                const elapsed = (now - clockStart) * 0.001;
+
+                // 1. Cambio automático y suave de pintura, mordazas y acento neón cada 5.2 s
+                const colorCycleSec = 5.2;
+                const colorPhase = elapsed / colorCycleSec;
+                const idxA = Math.floor(colorPhase) % paintPalette.length;
+                const idxB = (idxA + 1) % paintPalette.length;
+                const blendColor = smoothstep(0.62, 1.0, colorPhase % 1);
+
+                bodyMat.color.copy(tmpPaintA.setHex(paintPalette[idxA].paint)).lerp(tmpPaintB.setHex(paintPalette[idxB].paint), blendColor);
+                caliperMat.color.copy(tmpCaliperA.setHex(paintPalette[idxA].caliper)).lerp(tmpCaliperB.setHex(paintPalette[idxB].caliper), blendColor);
+                accentTrimMat.color.copy(tmpAccentA.setHex(paintPalette[idxA].accent)).lerp(tmpAccentB.setHex(paintPalette[idxB].accent), blendColor);
+                underglow.color.copy(accentTrimMat.color);
+                outerRingMat.color.copy(accentTrimMat.color);
+
+                // 2. Ciclo automático de conducción: crucero suave <-> aceleración biturbo cada 9 s
+                const driveWave = Math.sin(elapsed * (Math.PI * 2 / 9.0) - 0.8);
+                const throttle = smoothstep(-0.15, 0.72, driveWave); // 0 = crucero, 1 = pleno boost
+
+                // 3. Modulación automática de luces delanteras, neón inferior y freno trasero
+                const lightWave = 0.5 + 0.5 * Math.sin(elapsed * 0.95);
+                frontBeam.intensity = 1.15 + lightWave * 1.15 + throttle * 0.65;
+                underglow.intensity = 0.95 + lightWave * 0.75 + throttle * 0.55;
+                tailGlow.intensity = 0.75 + throttle * 1.15;
+
+                // Rotación orbital continua cuando el usuario no está arrastrando
+                if (autoSpin && !dragging) {
+                    targetRotY += 0.0042 + throttle * 0.0055;
+                }
+                currentRotY += (targetRotY - currentRotY) * 0.075;
+                currentRotX += (targetRotX - currentRotX) * 0.075;
+
+                root.rotation.y = currentRotY;
+                root.rotation.x = currentRotX;
+
+                // Giro progresivo de ruedas + dinámica de suspensión / cabeceo al acelerar
+                const wheelSpeed = 0.085 + throttle * 0.34;
+                wheels.forEach(function (w) { w.rotation.z += wheelSpeed; });
+                car.position.y = Math.sin(elapsed * (2.6 + throttle * 6.0)) * (0.006 + throttle * 0.008);
+                car.rotation.z = -throttle * 0.018;
+
+                // Llamas cuádruples automáticas cuando sube el régimen de giro
+                const flameStrength = smoothstep(0.45, 0.92, throttle);
+                flameOuterMat.opacity = flameStrength * (0.58 + Math.sin(elapsed * 32) * 0.22);
+                flameCoreMat.opacity = flameStrength * (0.78 + Math.cos(elapsed * 38) * 0.20);
+                flames.forEach(function (fg, i) {
+                    const flicker = 0.78 + 0.38 * Math.abs(Math.sin(elapsed * 26 + i * 1.3));
+                    fg.scale.set(flameStrength * flicker, 0.7 + flameStrength * 0.35, 0.7 + flameStrength * 0.35);
+                });
+
+                // Pulso de balizas OBD2
+                Object.keys(beacons).forEach(function (k) {
+                    const b = beacons[k];
+                    const boost = activeBeacon === k ? 1.55 : 1.0;
+                    const pulse = boost * (1 + Math.sin(elapsed * 3.8) * 0.18);
+                    b.scale.set(pulse, pulse, pulse);
+                });
+
+                // Telemetría sincronizada en vivo sin botones (actualizada cada ~140 ms)
+                if (now - lastHudUpdate > 140) {
+                    lastHudUpdate = now;
+                    const rpm = Math.round(2180 + throttle * 5420 + Math.sin(elapsed * 9) * 55);
+                    const kmh = Math.round(72 + throttle * 156);
+                    const ect = Math.round(87 + throttle * 11);
+                    const oil = Math.round(42 + throttle * 23);
+                    const wear = Math.round(31 + throttle * 19);
+                    const score = Math.round(93 - throttle * 6);
+
+                    const isBoost = throttle > 0.55;
+                    rpmEl.classList.toggle('boost', isBoost);
+                    rpmEl.textContent = (isBoost ? '🔥 ' : '⚡ ') + rpm.toLocaleString('es-CO') + ' RPM · ' + kmh + ' km/h';
+                    valTemp.textContent = ect + '°C';
+                    barTemp.style.width = (38 + throttle * 32).toFixed(1) + '%';
+                    valOil.textContent = oil + ' psi';
+                    barOil.style.width = (54 + throttle * 27).toFixed(1) + '%';
+                    valWear.textContent = wear + '%';
+                    barWear.style.width = wear + '%';
+                    valScore.textContent = String(score);
+                }
+
+                holoRing.rotation.z += 0.005 + throttle * 0.006;
+                innerRing.rotation.z -= 0.004;
+                renderer.render(scene, camera);
+            }
+            requestAnimationFrame(animar);
         })();
     </script>
 </body>
