@@ -18,12 +18,15 @@ El sistema se compone de dos frentes principales:
 graph TD
     A["Escáner ELM327 (OBD2 Bluetooth)"] -->|Bluetooth SPP| B["App Móvil Android AutoSen"]
     B -->|HTTP JSON REST /api/| C["Módulo API Django"]
-    D["Navegador Web (Cliente / Admin)"] -->|HTTPS / HTML5| E["Módulo Web & Panel Django"]
+    D["Navegador Web (Cliente / Admin)"] -->|HTTPS + API Notification| E["Módulo Web & Panel Django"]
     C --> F["Capa de Negocio y Patrones GoF"]
     E --> F
     F --> G["Capa de Persistencia ORM (Django)"]
     G --> H["Base de Datos PostgreSQL 18"]
-    F --> I["Despachador Multicanal (WhatsApp / Email / Telegram / WebPush)"]
+    F -->|on_commit + Hilo Asíncrono| I["Integración Externa (core/servicios_externos.py)"]
+    I -->|HTTPS JSON| TG["Telegram Bot API"]
+    I -->|SMTP STARTTLS 587| GM["Gmail SMTP"]
+    I -->|HTTPS Graph API| WA["WhatsApp Cloud API (Meta)"]
 ```
 
 ---
@@ -37,9 +40,15 @@ graph LR
     subgraph Core ["core (Núcleo)"]
         M[Modelos ORM]
         P[Patrones GoF]
-        N[Notificaciones]
+        N[Notificaciones e Hilos]
+        SE[Servicios Externos HTTP/SMTP]
         A[Auditoría]
-        V[Validaciones]
+        V[Validaciones y Normalización]
+    end
+    subgraph ExternosAPI ["Sistemas Externos Consumidos"]
+        TG_API["Telegram Bot API"]
+        GMAIL_SMTP["Gmail SMTP"]
+        WA_CLOUD["WhatsApp Cloud API (Meta)"]
     end
     subgraph Apps ["Módulos de Aplicación"]
         WEB[web: Portal Clientes]
@@ -51,9 +60,13 @@ graph LR
     PANEL --> Core
     API --> Core
     REP --> Core
+    N --> SE
+    SE --> TG_API
+    SE --> GMAIL_SMTP
+    SE --> WA_CLOUD
 ```
 
-* **`core/`**: Modelos de base de datos (`Cliente`, `Vehiculo`, `Sensor`, `Alerta`, `RegistroAuditoria`, `NotificacionEnviada`, `Usuario`), patrones GoF, autenticación personalizada y utilidades de normalización.
+* **`core/`**: Modelos de base de datos (`Cliente`, `Vehiculo`, `Sensor`, `Lectura`, `Alerta`, `RegistroAuditoria`, `NotificacionEnviada`, `Usuario`) con integridad referencial completa (`SET_NULL` en historial de telemetría y en auditoría administrativa), patrones GoF, cliente de servicios externos (`servicios_externos.py` para Telegram Bot API, Gmail SMTP y WhatsApp Cloud API), auditoría de acciones y eventos de sesión (`LOGIN`, `LOGIN_FALLIDO`, `LOGOUT`), autenticación personalizada y utilidades de normalización.
 * **`api/`**: Endpoints para sincronización de telemetría OBD2, lectura de códigos DTC y simulación de desgaste.
 * **`panel/`**: Vistas administrativas con control de acceso por roles (`SUPERADMIN`, `ADMIN`, `SOPORTE`), calibración técnica y auditoría.
 * **`web/`**: Portal del cliente para registro (con correo y WhatsApp), gestión vehicular y monitoreo personal.
@@ -103,9 +116,25 @@ classDiagram
         +int nivel
         +string tipo_dano
     }
+    class Usuario {
+        +int id_usuario
+        +string nombre
+        +string correo
+        +string rol
+    }
+    class Lectura {
+        +int id_lectura
+        +int vehiculo_id
+        +string placa_historica
+        +string nombre_sensor
+        +float valor
+        +int nivel
+        +datetime fecha_lectura
+    }
     class Alerta {
         +int id_alerta
-        +int id_vehiculo
+        +int vehiculo_id
+        +string placa_historica
         +string nombre_sensor
         +string tipo_sensor
         +int nivel
@@ -114,11 +143,13 @@ classDiagram
     }
     class RegistroAuditoria {
         +int id_auditoria
+        +int usuario_id
         +string accion
         +string entidad
-        +int entidad_id
+        +string entidad_id
         +string descripcion
         +string usuario_correo
+        +string usuario_rol
         +datetime fecha
     }
     class NotificacionEnviada {
@@ -128,13 +159,16 @@ classDiagram
         +string asunto
         +string mensaje
         +string estado
+        +string detalle_error
         +datetime fecha_envio
     }
 
     Cliente "1" -- "0..*" Vehiculo : es propietario de
     Vehiculo "1" -- "0..*" Sensor : posee
-    Vehiculo "1" -- "0..*" Alerta : genera
-    Alerta "1" -- "0..*" NotificacionEnviada : despacha
+    Vehiculo "0..1" -- "0..*" Lectura : registra (SET NULL)
+    Vehiculo "0..1" -- "0..*" Alerta : genera (SET NULL)
+    Alerta "0..1" -- "0..*" NotificacionEnviada : despacha (SET NULL)
+    Usuario "0..1" -- "0..*" RegistroAuditoria : audita (SET NULL)
 ```
 
 ---
@@ -159,10 +193,10 @@ graph TD
         Postgres[("PostgreSQL 18 - Base: vehiculos")]
     end
 
-    subgraph Externos ["Servicios de Notificación"]
-        WA["WhatsApp Web / Cloud API"]
-        SMTP["Servidor SMTP (Email)"]
-        TG["Telegram Bot API"]
+    subgraph Externos ["Sistemas Externos Integrados"]
+        WA["WhatsApp Cloud API (Meta Graph)"]
+        SMTP["Gmail SMTP (smtp.gmail.com:587)"]
+        TG["Telegram Bot API (api.telegram.org)"]
     end
 
     OBD2 -->|Bluetooth SPP| Mobile

@@ -46,7 +46,7 @@ Regla general: **cuando el dump y el código Java no coinciden, manda el código
 |---|---|---|
 | F1 | `/api/**` es público: no exige sesión ni CSRF. Excepción: `/api/obd2/conectar` exige sesión de cliente. | La app Android no maneja sesión. En Java, `/api/**` exige sesión y la app recibe un 302 a una página HTML. |
 | F2 | Sesiones de admin y de cliente independientes. Todo `/admin/**` (salvo `/admin/login`) exige sesión de admin. | En Java ambas cadenas comparten el `SecurityContext` y la de admin solo pide `authenticated()`, así que un cliente logueado entra a `/admin`. |
-| F3 | Borrar un vehículo (desde el panel, desde la web del cliente o en cascada al borrar un cliente) no falla. Los sensores se borran en cascada. `lecturas` y `alertas` guardan `Id_vehiculo` sin clave foránea, así que se conservan como historial. | En Java, el `deleteBy…` derivado se ejecuta sin `@Transactional`, y las claves foráneas de `lecturas`/`alertas` en MySQL impiden el borrado. El README pide conservar las lecturas históricas. |
+| F3 | Borrar un vehículo (desde el panel, desde la web del cliente o en cascada al borrar un cliente) no falla. Los sensores se borran en cascada. `lecturas` y `alertas` enlazan `"Id_vehiculo"` mediante `ForeignKey(Vehiculo, on_delete=models.SET_NULL, null=True)` y guardan `placa_historica`, así que al borrar el vehículo quedan con `vehiculo = NULL` conservando su historial y su placa original. | En Java, el `deleteBy…` derivado se ejecuta sin `@Transactional`, y las claves foráneas `RESTRICT` de `lecturas`/`alertas` en MySQL impiden el borrado. `SET_NULL` mantiene la integridad referencial y conserva las lecturas y alertas históricas. |
 | F4 | `sensores."Tipo_daño"` acepta NULL. | El panel permite dejarlo vacío, pero en MySQL la columna es NOT NULL, lo que da un 500. |
 | F5 | El filtro `tipoPlaca` se aplica (clientes con al menos un vehículo de ese tipo; comparación sin distinguir mayúsculas ni tildes) en `/admin/reportes-filtrado`, `/admin/reportes/excel` y `/admin/reportes/pdf`. Además, el PDF general aplica `q` y `marca` con la misma función `filtrar_clientes` que el Excel. | Hoy el filtro solo se repinta en el formulario, y el PDF filtrado ignora parte de los filtros. |
 | F6 | Existen las columnas `vehiculo.elm_mac` y `sensores."Estado"` (ambas aceptan NULL). | El código Java las usa y el dump no las tiene. |
@@ -128,7 +128,8 @@ Tablas y columnas con **los mismos nombres que en MySQL** (`db_table` y `db_colu
 | | `estado` → `Estado` | Char(20) | sí | F6 |
 | | `vehiculo` → `Id_vehiculo` | FK Vehiculo, `CASCADE` | sí | como el `CascadeType.ALL` de JPA |
 | `Lectura` (`lecturas`) | `id_lectura` → `Id_lectura` | AutoField PK | | |
-| | `id_vehiculo` → `Id_vehiculo` | Integer **sin FK**, indexado | no | F3 |
+| | `vehiculo` → `Id_vehiculo` | FK Vehiculo, `SET_NULL` | **sí** | F3 (conserva historial al borrar vehículo) |
+| | `placa_historica` → `placa_historica` | Char(10) | **sí** | Placa al momento de la lectura |
 | | `nombre_sensor` → `Nombre_sensor` | Char(120) | no | |
 | | `tipo_sensor` → `Tipo_sensor` | Char(50) | no | |
 | | `valor` → `Valor` | Float | no | |
@@ -137,7 +138,8 @@ Tablas y columnas con **los mismos nombres que en MySQL** (`db_table` y `db_colu
 | | `estado` → `Estado` | Char(20), default `'OK'` | no | |
 | | `fecha_lectura` → `Fecha_lectura` | DateTime | no | |
 | `Alerta` (`alertas`) | `id_alerta` → `Id_alerta` | AutoField PK | | |
-| | `id_vehiculo` → `Id_vehiculo` | Integer **sin FK**, indexado | no | F3 |
+| | `vehiculo` → `Id_vehiculo` | FK Vehiculo, `SET_NULL` | **sí** | F3 (conserva historial al borrar vehículo) |
+| | `placa_historica` → `placa_historica` | Char(10) | **sí** | Placa al momento de la alerta |
 | | `nombre_sensor`, `tipo_sensor`, `valor`, `nivel` | como en `Lectura` | no | |
 | | `tipo` → `Tipo` | Char(20) | no | `falla` / `advertencia` |
 | | `mensaje` → `Mensaje` | Char(255) | no | |

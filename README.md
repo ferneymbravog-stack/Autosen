@@ -89,7 +89,40 @@ Con un teléfono físico en la misma red:
 1. Añade la IP de tu PC en `ALLOWED_HOSTS_EXTRA` dentro de `.env`.
 2. Cambia `BASE_URL` en la app.
 
-La API (`/api/**`) no usa sesión ni CSRF, igual que la espera la app.
+La API (`/api/**`) no usa sesión ni CSRF, igual que la espera la app (salvo los endpoints exclusivos del navegador web con sesión).
+
+## Notificaciones reales
+
+AutoSen consume servicios externos reales para despachar automáticamente las alertas de advertencia (`nivel >= 40`) y falla crítica (`nivel >= 70`), registrando el estado real (`ENVIADO`, `FALLIDO`, `OMITIDO` o `EN_COLA`) y el motivo en caso de error u omisión. Todas las credenciales se configuran únicamente en `.env` (ver `.env.example`).
+
+### 1. Telegram (`Telegram Bot API`)
+1. Abre Telegram, busca **`@BotFather`** y envía el comando `/newbot`. Sigue las instrucciones para darle nombre y usuario al bot y copia el **token** entregado (`TELEGRAM_BOT_TOKEN`).
+2. Crea un grupo en Telegram, agrega tu bot al grupo y envía al menos un mensaje de texto dentro del grupo.
+3. Abre en el navegador `https://api.telegram.org/bot<TOKEN>/getUpdates` (reemplazando `<TOKEN>` por tu token real) y busca el objeto `"chat":{"id": ...}`. Copia ese número en `TELEGRAM_CHAT_ID` (en los grupos el ID es **negativo**, por ejemplo `-1001234567890`).
+
+### 2. Email (`Gmail SMTP`)
+1. Entra a la cuenta de Google remitente y activa la **Verificación en dos pasos** (*Seguridad → Verificación en 2 pasos*).
+2. En la misma sección de Seguridad, entra a **Contraseñas de aplicaciones**, genera una clave de 16 caracteres para *"Correo"* y cópiala en `EMAIL_HOST_PASSWORD` (**no uses tu contraseña normal de Gmail**).
+3. Configura tu dirección en `EMAIL_HOST_USER` (y opcionalmente `DEFAULT_FROM_EMAIL`).
+
+### 3. WhatsApp (`WhatsApp Cloud API de Meta`)
+1. Ingresa a [developers.facebook.com](https://developers.facebook.com/), crea una aplicación de tipo **Empresa (Business)** y agrega el producto **WhatsApp**.
+2. En *WhatsApp → Configuración de la API*, copia el **Identificador de número de teléfono** (`WHATSAPP_PHONE_NUMBER_ID`), el **Token de acceso** (`WHATSAPP_TOKEN`) y la versión del endpoint mostrada en el panel (`WHATSAPP_API_VERSION`, p. ej. `v21.0`).
+3. En la sección *Para*, registra y verifica con código hasta **5 números de teléfono de prueba** destinatarios.
+4. **Regla de las 24 horas:** en modo estándar sin plantillas aprobadas, el destinatario debe haber enviado primero un mensaje al número de prueba de WhatsApp dentro de las últimas **24 horas** para abrir la ventana de conversación.
+5. **Vigencia del token:** el token temporal del panel de Meta **vence en 24 horas**. Para uso continuo o producción, crea un **Usuario del sistema** en el *Business Manager* de Meta, asígnale permisos sobre la app y la cuenta de WhatsApp Business (`whatsapp_business_messaging`) y genera un **token permanente**.
+
+### 4. Navegador (`API Notification`)
+1. Inicia sesión en el dashboard del cliente (`/dashboard`) o en el panel administrativo (`/admin`).
+2. Presiona el botón **🔔 Activar notificaciones** en la parte superior derecha y acepta el permiso emergente del navegador.
+3. Cuando ingrese una alerta nueva, aparecerá una notificación nativa del sistema operativo; al hacer clic sobre ella se enfocará la pestaña de AutoSen y el registro pasará de `EN_COLA` a `ENVIADO`.
+
+### 5. Probar todos los canales por consola
+Ejecuta el comando integrado para verificar tus credenciales reales antes de operar:
+
+```bash
+python manage.py probar_canales --email destino@correo.com --whatsapp 3001234567
+```
 
 ## Pruebas
 
