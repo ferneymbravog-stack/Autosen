@@ -5,6 +5,7 @@ from django.test import SimpleTestCase, TestCase
 from api.obd2 import (calcular_nivel, crear_alerta_si_corresponde, estado_por_nivel, redondear, redondear_dos,
                       unidad_de, valor_simulado)
 from core.models import Alerta
+from core.tests.fabricas import crear_cliente, crear_vehiculo
 
 
 class CalcularNivelTests(SimpleTestCase):
@@ -37,14 +38,17 @@ class SimulacionTests(SimpleTestCase):
 
 
 class AlertasTests(TestCase):
+    def setUp(self):
+        self.v = crear_vehiculo(crear_cliente(), placa="OBD123")
+
     def test_crea_alerta_de_falla_y_notifica(self):
         with self.assertLogs("autosen.observador", level="WARNING"):
-            a = crear_alerta_si_corresponde(4, "RPM del motor", "RPM", 2345.0, 73, " rpm")
-        self.assertEqual((a.tipo, a.mensaje, a.leida, a.fecha_alerta.microsecond),
-                         ("falla", "Falla crítica en RPM del motor: nivel 73% (2345.0 rpm).", 0, 0))
+            a = crear_alerta_si_corresponde(self.v.pk, "RPM del motor", "RPM", 2345.0, 73, " rpm")
+        self.assertEqual((a.tipo, a.mensaje, a.leida, a.fecha_alerta.microsecond, a.vehiculo, a.placa_historica),
+                         ("falla", "Falla crítica en RPM del motor: nivel 73% (2345.0 rpm).", 0, 0, self.v, "OBD123"))
 
     def test_advertencia_y_nivel_bajo(self):
-        a = crear_alerta_si_corresponde(4, "O2", "O2", 0.5, 40, "")
-        self.assertEqual((a.tipo, a.mensaje), ("advertencia", "Advertencia en O2: nivel 40% (0.5)."))
-        self.assertIsNone(crear_alerta_si_corresponde(4, "O2", "O2", 0.1, 39, ""))
+        a = crear_alerta_si_corresponde(self.v, "O2", "O2", 0.5, 40, "")
+        self.assertEqual((a.tipo, a.mensaje, a.vehiculo), ("advertencia", "Advertencia en O2: nivel 40% (0.5).", self.v))
+        self.assertIsNone(crear_alerta_si_corresponde(self.v, "O2", "O2", 0.1, 39, ""))
         self.assertEqual(Alerta.objects.count(), 1)

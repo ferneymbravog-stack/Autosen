@@ -3,7 +3,9 @@ from contextlib import redirect_stdout
 from importlib import import_module
 
 from django.apps import apps as django_apps
-from django.test import TestCase
+from django.db import connection
+from django.db.migrations.executor import MigrationExecutor
+from django.test import TestCase, TransactionTestCase
 
 from core.models import Sensor, Vehiculo
 from core.tests.fabricas import crear_cliente, crear_usuario, crear_vehiculo
@@ -59,3 +61,63 @@ class NormalizarDatosTests(TestCase):
         admin.delete()
         c.refresh_from_db()
         self.assertIsNone(c.usuario)
+
+
+class MigracionHuerfanosVehiculoTests(TransactionTestCase):
+    """Verifica que las migraciones 0009 y 0010 limpien huérfanos, llenen placa_historica y sean reversibles."""
+
+    def test_migracion_0009_y_0010_limpia_huerfanos_llena_placas_y_es_reversible(self):
+        executor = MigrationExecutor(connection)
+        executor.migrate([("core", "0008_renombrar_web_push_a_navegador")])
+        apps_0008 = executor.loader.project_state([("core", "0008_renombrar_web_push_a_navegador")]).apps
+
+        Cliente08 = apps_0008.get_model("core", "Cliente")
+        Vehiculo08 = apps_0008.get_model("core", "Vehiculo")
+        Lectura08 = apps_0008.get_model("core", "Lectura")
+        Alerta08 = apps_0008.get_model("core", "Alerta")
+
+        from core.utilidades import ahora
+
+        c = Cliente08.objects.create(
+            nombre_cliente="Test", apellido_cliente="Mig", contrasena="h", correo="mig@test.com", estado="activo"
+        )
+        v = Vehiculo08.objects.create(
+            cliente=c, nombre_vehiculo="Onix", color="Rojo", marca="Chevrolet", placa="MIG123", tipo_placa="particular"
+        )
+        lec_valida = Lectura08.objects.create(
+            id_vehiculo=v.pk, nombre_sensor="O2", tipo_sensor="O2", valor=0.5, unidad="V", nivel=40,
+            estado="ADVERTENCIA", fecha_lectura=ahora(),
+        )
+        lec_huerfana = Lectura08.objects.create(
+            id_vehiculo=99999, nombre_sensor="ECT", tipo_sensor="ECT", valor=95.0, unidad="C", nivel=80,
+            estado="FALLA", fecha_lectura=ahora(),
+        )
+        ale_huerfana = Alerta08.objects.create(
+            id_vehiculo=88888, nombre_sensor="ECT", tipo_sensor="ECT", valor=95.0, nivel=80, tipo="falla",
+            mensaje="Falla", leida=0, fecha_alerta=ahora(),
+        )
+
+        # Avanzar a la última migración aplicando 0009 y 0010
+        executor = MigrationExecutor(connection)
+        salida = io.StringIO()
+        with redirect_stdout(salida):
+            executor.migrate(executor.loader.graph.leaf_nodes("core"))
+
+        self.assertIn("lecturas: 1, alertas: 1", salida.getvalue())
+
+        apps_actual = executor.loader.project_state(executor.loader.graph.leaf_nodes("core")).apps
+        LecturaActual = apps_actual.get_model("core", "Lectura")
+        AlertaActual = apps_actual.get_model("core", "Alerta")
+
+        lv = LecturaActual.objects.get(pk=lec_valida.pk)
+        lh = LecturaActual.objects.get(pk=lec_huerfana.pk)
+        ah = AlertaActual.objects.get(pk=ale_huerfana.pk)
+        self.assertEqual((lv.vehiculo_id, lv.placa_historica), (v.pk, "MIG123"))
+        self.assertIsNone(lh.vehiculo_id)
+        self.assertIsNone(ah.vehiculo_id)
+
+        # Verificar reversibilidad a 0008 y volver al estado final
+        executor = MigrationExecutor(connection)
+        executor.migrate([("core", "0008_renombrar_web_push_a_navegador")])
+        executor = MigrationExecutor(connection)
+        executor.migrate(executor.loader.graph.leaf_nodes("core"))

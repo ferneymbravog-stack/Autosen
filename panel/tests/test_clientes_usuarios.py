@@ -1,8 +1,8 @@
 from django.test import TestCase
 
-from core.models import Cliente, Lectura, Usuario, Vehiculo
-from core.tests.fabricas import (crear_cliente, crear_lectura, crear_sensor, crear_usuario, crear_vehiculo, login_admin,
-                                 login_cliente)
+from core.models import Alerta, Cliente, Lectura, Usuario, Vehiculo
+from core.tests.fabricas import (crear_alerta, crear_cliente, crear_lectura, crear_sensor, crear_usuario,
+                                 crear_vehiculo, login_admin, login_cliente)
 
 
 class AccesoTests(TestCase):
@@ -80,11 +80,18 @@ class ClientesTests(Base):
 
     def test_eliminar_cliente_con_vehiculos_y_lecturas(self):  # F3
         c = crear_cliente()
-        v = crear_vehiculo(c)
+        v = crear_vehiculo(c, placa="CLI555")
         crear_sensor(v)
-        crear_lectura(v.pk)
+        lec = crear_lectura(v)
+        ale = crear_alerta(v)
         self.assertRedirects(self.client.post(f"/admin/cliente/{c.pk}/eliminar"), "/admin", fetch_redirect_response=False)
-        self.assertEqual((Cliente.objects.count(), Vehiculo.objects.count(), Lectura.objects.count()), (0, 0, 1))
+        lec.refresh_from_db()
+        ale.refresh_from_db()
+        self.assertEqual((Cliente.objects.count(), Vehiculo.objects.count(), Lectura.objects.count(), Alerta.objects.count()),
+                         (0, 0, 1, 1))
+        self.assertIsNone(lec.vehiculo)
+        self.assertIsNone(ale.vehiculo)
+        self.assertEqual((lec.placa_historica, ale.placa_historica), ("CLI555", "CLI555"))
 
     def test_id_inexistente_da_404(self):  # lote A
         for url in ("/admin/cliente/9999/editar", "/admin/vehiculo/9999/editar", "/admin/sensor/9999/editar",

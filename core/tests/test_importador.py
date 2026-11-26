@@ -67,8 +67,13 @@ class ImportarMysqlTests(TestCase):
         self.assertEqual((s.tipo_dano, s.estado), ("Falla en mezcla\ncombustible", None))
         self.assertEqual(Sensor.objects.get(pk=22).nivel, 0)
         lectura = Lectura.objects.get(pk=7)
-        self.assertEqual((lectura.valor, lectura.fecha_lectura), (2345.5, datetime(2026, 9, 14, 20, 4, 25)))
-        self.assertEqual(Alerta.objects.get(pk=3).mensaje, "Falla crítica; revisar (motor)")
+        self.assertEqual(
+            (lectura.valor, lectura.fecha_lectura, lectura.vehiculo_id, lectura.placa_historica),
+            (2345.5, datetime(2026, 9, 14, 20, 4, 25), 4, "EMT262"),
+        )
+        alerta = Alerta.objects.get(pk=3)
+        self.assertEqual((alerta.mensaje, alerta.vehiculo_id, alerta.placa_historica),
+                         ("Falla crítica; revisar (motor)", 4, "EMT262"))
 
     def test_secuencias_continuan_despues_de_los_ids_importados(self):
         self.importar()
@@ -84,3 +89,25 @@ class ImportarMysqlTests(TestCase):
         self.importar(limpiar=True)
         self.assertEqual(Cliente.objects.count(), 2)
         self.assertFalse(Cliente.objects.filter(correo="otro@test.com").exists())
+
+    def test_importa_lecturas_y_alertas_huerfanas_con_vehiculo_null_y_aviso(self):
+        from core.importador import importar
+
+        sql_huerfano = (
+            DUMP.read_text(encoding="utf-8")
+            + "\nINSERT INTO `lecturas` (`Id_lectura`, `Id_vehiculo`, `Nombre_sensor`, `Tipo_sensor`, `Valor`, "
+            "`Unidad`, `Nivel`, `Estado`, `Fecha_lectura`) VALUES "
+            "(99, 9999, 'Sensor O2', 'O2', 0.9, 'V', 80, 'FALLA', '2026-10-01 10:00:00');\n"
+            "INSERT INTO `alertas` (`Id_alerta`, `Id_vehiculo`, `Nombre_sensor`, `Tipo_sensor`, `Valor`, "
+            "`Nivel`, `Tipo`, `Mensaje`, `Leida`, `Fecha_alerta`) VALUES "
+            "(88, 9999, 'Sensor O2', 'O2', 0.9, 80, 'falla', 'Falla O2', 0, '2026-10-01 10:00:00');\n"
+        )
+        avisos = []
+        conteos = importar(sql_huerfano, limpiar=True, avisos=avisos)
+        self.assertEqual((conteos["lecturas"], conteos["alertas"]), (2, 2))
+        lec_h = Lectura.objects.get(pk=99)
+        ale_h = Alerta.objects.get(pk=88)
+        self.assertIsNone(lec_h.vehiculo)
+        self.assertIsNone(ale_h.vehiculo)
+        self.assertTrue(any("lecturas" in a and "9999" in a for a in avisos))
+        self.assertTrue(any("alertas" in a and "9999" in a for a in avisos))

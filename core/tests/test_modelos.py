@@ -18,12 +18,17 @@ class EsquemaTests(TestCase):
         self.assertEqual(Vehiculo._meta.get_field("elm_mac").column, "elm_mac")
         self.assertEqual(Alerta._meta.get_field("fecha_alerta").column, "Fecha_alerta")
 
-    def test_lecturas_y_alertas_sin_clave_foranea(self):  # F3
+    def test_lecturas_y_alertas_con_clave_foranea_set_null(self):  # F3 con FK real
         for modelo in (Lectura, Alerta):
-            campo = modelo._meta.get_field("id_vehiculo")
-            self.assertIsInstance(campo, models.IntegerField)
-            self.assertFalse(campo.is_relation)
-            self.assertTrue(campo.db_index)
+            campo = modelo._meta.get_field("vehiculo")
+            self.assertIsInstance(campo, models.ForeignKey)
+            self.assertTrue(campo.is_relation)
+            self.assertEqual(campo.column, "Id_vehiculo")
+            self.assertIs(campo.remote_field.on_delete, models.SET_NULL)
+            self.assertTrue(campo.null)
+            placa_hist = modelo._meta.get_field("placa_historica")
+            self.assertIsInstance(placa_hist, models.CharField)
+            self.assertEqual(placa_hist.max_length, 10)
 
 
 class ComportamientoTests(TestCase):
@@ -42,12 +47,17 @@ class ComportamientoTests(TestCase):
         self.assertIsNone(Sensor.objects.get(pk=s.pk).tipo_dano)
 
     def test_borrar_vehiculo_borra_sensores_y_conserva_historial(self):  # F3
-        v = crear_vehiculo(crear_cliente())
+        v = crear_vehiculo(crear_cliente(), placa="HIS789")
         crear_sensor(v)
-        crear_lectura(v.pk)
-        crear_alerta(v.pk)
+        lec = crear_lectura(v)
+        ale = crear_alerta(v)
         v.delete()
+        lec.refresh_from_db()
+        ale.refresh_from_db()
         self.assertEqual((Sensor.objects.count(), Lectura.objects.count(), Alerta.objects.count()), (0, 1, 1))
+        self.assertIsNone(lec.vehiculo)
+        self.assertIsNone(ale.vehiculo)
+        self.assertEqual((lec.placa_historica, ale.placa_historica), ("HIS789", "HIS789"))
 
     def test_cliente_con_vehiculos_esta_protegido(self):
         c = crear_cliente()

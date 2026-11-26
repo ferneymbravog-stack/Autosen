@@ -114,12 +114,17 @@ class EditarEliminarTests(Base):
 
     def test_eliminar_conserva_historial(self):  # F3
         crear_sensor(self.v)
-        crear_lectura(self.v.pk)
-        crear_alerta(self.v.pk)
+        lec = crear_lectura(self.v)
+        ale = crear_alerta(self.v)
         self.assertRedirects(self.client.post(f"/vehiculos/{self.v.pk}/eliminar"), "/vehiculos",
                              fetch_redirect_response=False)
         self.assertFalse(Vehiculo.objects.filter(pk=self.v.pk).exists())
+        lec.refresh_from_db()
+        ale.refresh_from_db()
         self.assertEqual((Sensor.objects.count(), Lectura.objects.count()), (0, 1))
+        self.assertIsNone(lec.vehiculo)
+        self.assertIsNone(ale.vehiculo)
+        self.assertEqual((lec.placa_historica, ale.placa_historica), ("ABC123", "ABC123"))
 
     def test_campos_vacios_no_muestran_null(self):  # lote A
         sin_placa = crear_vehiculo(self.cliente, placa=None)

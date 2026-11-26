@@ -3,8 +3,9 @@ from unittest import mock
 
 from django.test import Client, TestCase
 
-from core.models import Alerta, Lectura
-from core.tests.fabricas import crear_alerta, crear_cliente, crear_lectura, crear_sensor, crear_vehiculo, login_cliente
+from core.models import Alerta, Lectura, Vehiculo
+from core.tests.fabricas import (crear_alerta, crear_cliente, crear_lectura, crear_sensor, crear_usuario,
+                                 crear_vehiculo, login_admin, login_cliente)
 
 
 class LecturasTests(TestCase):
@@ -90,9 +91,70 @@ class ConsultasTests(TestCase):
         self.assertEqual(list(r["alertas"][0]), ["idAlerta", "nombreSensor", "tipoSensor", "valor", "nivel", "tipo",
                                                  "mensaje", "leida", "fechaAlerta"])
         self.assertEqual((r["alertas"][0]["idAlerta"], r["alertas"][0]["leida"]), (propia.pk, True))
+        otro = crear_vehiculo(crear_cliente(correo="otro@test.com"), placa="OTR999")
         for _ in range(50):
-            crear_alerta(self.v.pk + 1000)
+            crear_alerta(otro)
         self.assertEqual(self.client.get(f"/api/obd2/alertas/{self.v.pk}").json(), {"ok": True, "alertas": []})
+
+    def test_contrato_claves_json_api_intacto_y_borrado_conserva_historial(self):
+        c = crear_cliente(correo="contrato@test.com")
+        v = crear_vehiculo(c, placa="API777", nombre="Spark")
+        lec = crear_lectura(v, nombre_sensor="Sensor O2", tipo_sensor="O2", valor=0.85, unidad="V", nivel=80)
+        ale = crear_alerta(v, nombre_sensor="Sensor O2", tipo_sensor="O2", valor=0.85, nivel=80, tipo="falla")
+
+        # 1. Claves exactas de historial
+        r_hist = self.client.get(f"/api/obd2/historial/{v.pk}").json()
+        self.assertEqual(list(r_hist.keys()), ["ok", "lecturas"])
+        self.assertEqual(
+            list(r_hist["lecturas"][0].keys()),
+            ["idLectura", "nombreSensor", "tipoSensor", "valor", "unidad", "nivel", "estado", "fechaLectura"],
+        )
+
+        # 2. Claves exactas de alertas
+        r_ale = self.client.get(f"/api/obd2/alertas/{v.pk}").json()
+        self.assertEqual(list(r_ale.keys()), ["ok", "alertas"])
+        self.assertEqual(
+            list(r_ale["alertas"][0].keys()),
+            ["idAlerta", "nombreSensor", "tipoSensor", "valor", "nivel", "tipo", "mensaje", "leida", "fechaAlerta"],
+        )
+
+        # 3. Claves exactas de última lectura
+        r_ult = self.client.get(f"/api/obd2/ultima/{v.pk}").json()
+        self.assertEqual(list(r_ult.keys()), ["ok", "lecturas"])
+        self.assertEqual(
+            list(r_ult["lecturas"][0].keys()),
+            ["nombreSensor", "tipoSensor", "valor", "unidad", "nivel", "estado", "fechaLectura"],
+        )
+
+        # 4. Claves exactas de alertas en vivo (cliente y admin)
+        cli_c = Client()
+        login_cliente(cli_c, c)
+        r_vivo = cli_c.get("/api/alertas/en-vivo").json()
+        self.assertEqual(list(r_vivo.keys()), ["ok", "alertas", "total"])
+        self.assertEqual(
+            list(r_vivo["alertas"][0].keys()),
+            ["id", "sensor", "tipo_sensor", "nivel", "tipo", "mensaje", "vehiculo", "placa", "fecha"],
+        )
+
+        # 5. Al eliminar el vehículo desde el panel, lecturas y alertas quedan con vehiculo=None y placa_historica intacta
+        cli_admin = Client()
+        login_admin(cli_admin, crear_usuario(correo="adm@autosen.com", rol="SUPERADMIN"))
+        cli_admin.post(f"/admin/vehiculo/{v.pk}/eliminar")
+        self.assertFalse(Vehiculo.objects.filter(pk=v.pk).exists())
+        lec.refresh_from_db()
+        ale.refresh_from_db()
+        self.assertIsNone(lec.vehiculo)
+        self.assertIsNone(ale.vehiculo)
+        self.assertEqual((lec.placa_historica, ale.placa_historica), ("API777", "API777"))
+
+        # En alertas en vivo del admin, sigue mostrando la placa histórica y las mismas claves JSON
+        r_vivo_post = cli_admin.get("/api/alertas/en-vivo?modo=admin").json()
+        item_borrado = next(x for x in r_vivo_post["alertas"] if x["id"] == ale.pk)
+        self.assertEqual(item_borrado["placa"], "API777")
+        self.assertEqual(
+            list(item_borrado.keys()),
+            ["id", "sensor", "tipo_sensor", "nivel", "tipo", "mensaje", "vehiculo", "placa", "fecha"],
+        )
 
 
 class ConectarTests(TestCase):

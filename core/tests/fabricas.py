@@ -39,16 +39,39 @@ def crear_sensor(vehiculo, nivel=0, tipo="MAF", nombre="Sensor MAF", tipo_dano="
     )
 
 
-def crear_lectura(id_vehiculo, nivel=0, valor=1.0, fecha=None, **campos) -> Lectura:
-    datos = {"nombre_sensor": "S", "tipo_sensor": "T", **campos}
+def _resolver_vehiculo(vehiculo_o_id) -> Vehiculo | None:
+    if isinstance(vehiculo_o_id, Vehiculo):
+        return vehiculo_o_id
+    if isinstance(vehiculo_o_id, int):
+        return Vehiculo.objects.filter(pk=vehiculo_o_id).first()
+    return None
+
+
+def crear_lectura(vehiculo, nivel=0, valor=1.0, fecha=None, **campos) -> Lectura:
+    v_obj = _resolver_vehiculo(vehiculo)
+    datos = {
+        "nombre_sensor": "S",
+        "tipo_sensor": "T",
+        "placa_historica": v_obj.placa if v_obj else None,
+        **campos,
+    }
     return Lectura.objects.create(
-        id_vehiculo=id_vehiculo, nivel=nivel, valor=valor, fecha_lectura=fecha or ahora(), **datos
+        vehiculo=v_obj, nivel=nivel, valor=valor, fecha_lectura=fecha or ahora(), **datos
     )
 
 
-def crear_alerta(id_vehiculo, nivel=50, fecha=None, **campos) -> Alerta:
-    datos = {"nombre_sensor": "S", "tipo_sensor": "T", "tipo": "advertencia", "mensaje": "m", "valor": 1.0, **campos}
-    return Alerta.objects.create(id_vehiculo=id_vehiculo, nivel=nivel, fecha_alerta=fecha or ahora(), **datos)
+def crear_alerta(vehiculo, nivel=50, fecha=None, **campos) -> Alerta:
+    v_obj = _resolver_vehiculo(vehiculo)
+    datos = {
+        "nombre_sensor": "S",
+        "tipo_sensor": "T",
+        "tipo": "advertencia",
+        "mensaje": "m",
+        "valor": 1.0,
+        "placa_historica": v_obj.placa if v_obj else None,
+        **campos,
+    }
+    return Alerta.objects.create(vehiculo=v_obj, nivel=nivel, fecha_alerta=fecha or ahora(), **datos)
 
 
 def _post_con_csrf(client, url, datos):

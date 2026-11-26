@@ -42,7 +42,7 @@ class PatronesTests(SimpleTestCase):
                          [True, False, True, False, True])
 
     def test_observador_registra_la_alerta(self):
-        alerta = Alerta(id_vehiculo=4, nombre_sensor="RPM del motor", nivel=73,
+        alerta = Alerta(vehiculo_id=4, nombre_sensor="RPM del motor", nivel=73,
                         mensaje="Falla crítica en RPM del motor: nivel 73% (2345.0 rpm).")
         # El observador también despacha notificaciones (usa la BD); aquí solo se prueba el patrón.
         with mock.patch("core.notificaciones.despachar_notificacion_multicanal") as despachar, \
