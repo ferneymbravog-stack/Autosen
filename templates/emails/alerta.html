@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ asunto }}</title>
+</head>
+<body style="margin:0;padding:24px;background-color:#f3f4f6;font-family:Arial,Helvetica,sans-serif;color:#111827;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px;margin:0 auto;background-color:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e5e7eb;">
+    <tr>
+      <td style="padding:20px 24px;background-color:{% if es_critica %}#dc2626{% else %}#ea580c{% endif %};color:#ffffff;">
+        <div style="font-size:13px;letter-spacing:1px;text-transform:uppercase;opacity:0.9;">AutoSen · Monitoreo Vehicular OBD2</div>
+        <h1 style="margin:6px 0 0;font-size:20px;">{{ tipo_str }} detectada</h1>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:24px;">
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">
+          Hola <strong>{{ propietario }}</strong>, se registró una novedad en uno de tus vehículos monitoreados:
+        </p>
+
+        <table width="100%" cellspacing="0" cellpadding="10" style="border-collapse:collapse;border:1px solid #e5e7eb;font-size:14px;">
+          <tr style="background-color:#f9fafb;border-bottom:1px solid #e5e7eb;">
+            <th align="left" style="width:35%;color:#4b5563;">Vehículo</th>
+            <td>{{ vehiculo }}</td>
+          </tr>
+          <tr style="border-bottom:1px solid #e5e7eb;">
+            <th align="left" style="color:#4b5563;">Placa</th>
+            <td><strong>{{ placa }}</strong></td>
+          </tr>
+          <tr style="background-color:#f9fafb;border-bottom:1px solid #e5e7eb;">
+            <th align="left" style="color:#4b5563;">Sensor</th>
+            <td>{{ sensor }} ({{ tipo_sensor }})</td>
+          </tr>
+          <tr style="border-bottom:1px solid #e5e7eb;">
+            <th align="left" style="color:#4b5563;">Nivel</th>
+            <td>
+              <strong style="color:{% if es_critica %}#dc2626{% else %}#ea580c{% endif %};">{{ nivel }}%</strong>
+            </td>
+          </tr>
+          <tr style="background-color:#f9fafb;border-bottom:1px solid #e5e7eb;">
+            <th align="left" style="color:#4b5563;">Diagnóstico</th>
+            <td>{{ diagnostico }}</td>
+          </tr>
+          <tr>
+            <th align="left" style="color:#4b5563;">Fecha</th>
+            <td>{{ fecha }}</td>
+          </tr>
+        </table>
+
+        <div style="margin-top:24px;text-align:center;">
+          <a href="{{ url_dashboard }}" style="display:inline-block;padding:12px 22px;background-color:{% if es_critica %}#dc2626{% else %}#ea580c{% endif %};color:#ffffff;text-decoration:none;border-radius:8px;font-weight:bold;font-size:14px;">
+            Ver panel de AutoSen
+          </a>
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:14px 24px;background-color:#f9fafb;border-top:1px solid #e5e7eb;font-size:12px;color:#6b7280;text-align:center;">
+        Mensaje automático generado por AutoSen.
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

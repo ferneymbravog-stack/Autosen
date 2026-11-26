@@ -6,6 +6,7 @@ Las decisiones de fidelidad con el proyecto Java están en
 docs/superpowers/specs/2026-10-21-migracion-django-design.md.
 """
 import os
+import sys
 import warnings
 from pathlib import Path
 
@@ -14,6 +15,8 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 load_dotenv(BASE_DIR / ".env")
+
+EN_PRUEBAS = "test" in sys.argv
 
 SECRET_KEY = os.environ["SECRET_KEY"]
 
@@ -99,6 +102,37 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 APPEND_SLASH = False
 
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
+
+# Servicios externos: en pruebas quedan vacíos por defecto para no hacer llamadas reales.
+TELEGRAM_BOT_TOKEN = "" if EN_PRUEBAS else os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
+TELEGRAM_CHAT_ID = "" if EN_PRUEBAS else os.environ.get("TELEGRAM_CHAT_ID", "").strip()
+
+# Correo saliente (Gmail SMTP); sin credenciales se usa el backend de consola.
+EMAIL_HOST = os.environ.get("EMAIL_HOST", "smtp.gmail.com").strip() or "smtp.gmail.com"
+EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587") or "587")
+EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "True") == "True"
+EMAIL_HOST_USER = "" if EN_PRUEBAS else os.environ.get("EMAIL_HOST_USER", "").strip()
+EMAIL_HOST_PASSWORD = "" if EN_PRUEBAS else os.environ.get("EMAIL_HOST_PASSWORD", "").strip()
+DEFAULT_FROM_EMAIL = (
+    os.environ.get("DEFAULT_FROM_EMAIL", "").strip()
+    or EMAIL_HOST_USER
+    or "AutoSen Alertas <noreply@autosen.local>"
+)
+EMAIL_TIMEOUT = int(os.environ.get("EMAIL_TIMEOUT", "10") or "10")
+EMAIL_BACKEND = (
+    "django.core.mail.backends.smtp.EmailBackend"
+    if (EMAIL_HOST_USER and EMAIL_HOST_PASSWORD)
+    else "django.core.mail.backends.console.EmailBackend"
+)
+SITE_URL = os.environ.get("SITE_URL", "http://localhost:8080").strip().rstrip("/") or "http://localhost:8080"
+
+# WhatsApp Cloud API de Meta
+WHATSAPP_TOKEN = "" if EN_PRUEBAS else os.environ.get("WHATSAPP_TOKEN", "").strip()
+WHATSAPP_PHONE_NUMBER_ID = "" if EN_PRUEBAS else os.environ.get("WHATSAPP_PHONE_NUMBER_ID", "").strip()
+WHATSAPP_API_VERSION = "" if EN_PRUEBAS else os.environ.get("WHATSAPP_API_VERSION", "").strip()
+
+# Despacho asíncrono tras commit (False en pruebas para ejecución determinista).
+NOTIFICACIONES_ASINCRONAS = False if EN_PRUEBAS else os.environ.get("NOTIFICACIONES_ASINCRONAS", "True") == "True"
 
 LOGGING = {
     "version": 1,

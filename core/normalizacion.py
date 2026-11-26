@@ -37,3 +37,22 @@ def normalizar_modelo(modelo: str | None) -> str | None:
     if modelo is not None and re.fullmatch(r"\d{4}", modelo):
         return f"{modelo}-01-01"
     return modelo
+
+
+def normalizar_telefono_whatsapp(telefono: str | None) -> str | None:
+    """Normaliza un teléfono al formato internacional de dígitos sin '+' (antepone 57 a celulares CO de 10 dígitos)."""
+    if telefono is None:
+        return None
+    limpio = telefono.strip()
+    if not limpio or not re.fullmatch(r"\+?[\d\s\-()]+", limpio):
+        return None
+    digitos = re.sub(r"[\s\-()+]", "", limpio)
+    if not digitos.isdigit():
+        return None
+    if len(digitos) == 10 and digitos.startswith("3"):
+        digitos = "57" + digitos
+    if digitos.startswith("0") or not (11 <= len(digitos) <= 15):
+        return None
+    if digitos.startswith("57") and not re.fullmatch(r"573\d{9}", digitos):
+        return None
+    return digitos
