@@ -56,10 +56,14 @@ def cliente_actual(request) -> Cliente | None:
 def iniciar_sesion_admin(request, usuario: Usuario) -> None:
     request.session.cycle_key()
     request.session[CLAVE_ADMIN] = usuario.pk
+    request.admin = usuario
+    request.admin_correo = usuario.correo
 
 
 def cerrar_sesion_admin(request) -> None:
     request.session.pop(CLAVE_ADMIN, None)
+    request.admin = None
+    request.admin_correo = ""
 
 
 def admin_actual(request) -> Usuario | None:
@@ -166,7 +170,9 @@ def soporte_requerido(vista):
 
 
 def ruta_publica(ruta: str) -> bool:
-    """Rutas que no exigen sesión (permitAll en Java, más /api/** por F1)."""
+    """Rutas que no exigen sesión (permitAll en Java, más /api/** por F1 salvo endpoints web con sesión)."""
     if ruta in RUTAS_PUBLICAS or ruta.startswith("/static/"):
         return True
-    return ruta.startswith("/api/") and ruta != "/api/obd2/conectar"
+    if ruta == "/api/obd2/conectar" or (ruta.startswith("/api/alertas/") and ruta.endswith("/mostrada")):
+        return False
+    return ruta.startswith("/api/")

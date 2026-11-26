@@ -8,7 +8,7 @@ conserva así a propósito (docs/PENDIENTES.md).
 """
 import random
 
-from core.models import Alerta
+from core.models import Alerta, Vehiculo
 from core.patrones.observador import alerta_critica
 from core.utilidades import ahora, double_java, redondear_java
 
@@ -96,14 +96,21 @@ def estado_por_nivel(nivel: int) -> str:
     return "OK" if nivel < 40 else "ADVERTENCIA" if nivel < 70 else "FALLA"
 
 
-def crear_alerta_si_corresponde(id_vehiculo: int, nombre_sensor: str, tipo_sensor: str, valor: float, nivel: int,
-                                sufijo_unidad: str) -> Alerta | None:
-    """Con nivel >= 40 registra la alerta y notifica a los observadores (alerta_critica)."""
+def crear_alerta_si_corresponde(vehiculo: Vehiculo | int | None, nombre_sensor: str, tipo_sensor: str, valor: float,
+                                nivel: int, sufijo_unidad: str) -> Alerta | None:
+    """Con nivel >= 40 registra la alerta enlazada al vehículo y notifica a los observadores (alerta_critica)."""
     if nivel < 40:
         return None
+    if isinstance(vehiculo, Vehiculo):
+        vehiculo_obj = vehiculo
+    elif isinstance(vehiculo, int):
+        vehiculo_obj = Vehiculo.objects.filter(pk=vehiculo).first()
+    else:
+        vehiculo_obj = None
     detalle = f"{nombre_sensor}: nivel {nivel}% ({double_java(valor)}{sufijo_unidad})."
     alerta = Alerta.objects.create(
-        id_vehiculo=id_vehiculo,
+        vehiculo=vehiculo_obj,
+        placa_historica=vehiculo_obj.placa if vehiculo_obj else None,
         nombre_sensor=nombre_sensor,
         tipo_sensor=tipo_sensor,
         valor=valor,

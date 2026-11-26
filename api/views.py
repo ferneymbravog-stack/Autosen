@@ -10,10 +10,10 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
 from api.obd2 import calcular_nivel, crear_alerta_si_corresponde, estado_por_nivel, unidad_de, valor_simulado
-from core.auth import cifrar_contrasena, cliente_requerido, verificar_contrasena
+from core.auth import admin_actual, cifrar_contrasena, cliente_actual, cliente_requerido, verificar_contrasena
 from core.consultas import igual_mysql, placa_duplicada
 from core.http import metodos, parametro
-from core.models import Alerta, Cliente, Lectura, Sensor, Vehiculo
+from core.models import Alerta, Cliente, Lectura, NotificacionEnviada, Sensor, Vehiculo
 from core.normalizacion import normalizar_modelo, normalizar_placa, normalizar_tipo_placa
 from core.sensores_defecto import crear_sensores_por_defecto
 from core.utilidades import ahora, fecha_java
@@ -222,12 +222,14 @@ def guardar_lectura(request):
     tipo_sensor = parametro(request, "tipoSensor")
     valor = parametro(request, "valor", float)
     unidad = parametro(request, "unidad", requerido=False)
-    if not Vehiculo.objects.filter(pk=id_vehiculo).exists():
+    vehiculo = Vehiculo.objects.filter(pk=id_vehiculo).first()
+    if vehiculo is None:
         return respuesta_json({"ok": False, "mensaje": "Vehículo no encontrado."})
 
     nivel = calcular_nivel(tipo_sensor, valor)
     lectura = Lectura.objects.create(
-        id_vehiculo=id_vehiculo,
+        vehiculo=vehiculo,
+        placa_historica=vehiculo.placa,
         nombre_sensor=nombre_sensor,
         tipo_sensor=tipo_sensor,
         valor=valor,
@@ -236,7 +238,7 @@ def guardar_lectura(request):
         estado=estado_por_nivel(nivel),
         fecha_lectura=ahora(),
     )
-    crear_alerta_si_corresponde(id_vehiculo, nombre_sensor, tipo_sensor, valor, nivel,
+    crear_alerta_si_corresponde(vehiculo, nombre_sensor, tipo_sensor, valor, nivel,
                                 "" if unidad is None else " " + unidad)
     return respuesta_json({"ok": True, "mensaje": "Lectura registrada.", "idLectura": lectura.id_lectura,
                            "nivel": nivel, "estado": lectura.estado})
@@ -273,7 +275,7 @@ def elm(request, id):
 @metodos("GET")
 def historial(request, id_vehiculo):
     """Equivale a Obd2Controller.historial: todas las lecturas del vehículo, de la más reciente a la más antigua."""
-    lecturas = Lectura.objects.filter(id_vehiculo=id_vehiculo).order_by("-id_lectura")
+    lecturas = Lectura.objects.filter(vehiculo_id=id_vehiculo).order_by("-id_lectura")
     return respuesta_json({"ok": True, "lecturas": [lectura_json(lectura) for lectura in lecturas]})
 
 
@@ -294,7 +296,7 @@ def alertas(request, id_vehiculo):
             "leida": a.leida is not None and a.leida == 1,
             "fechaAlerta": fecha_java(a.fecha_alerta),
         }
-        for a in recientes if a.id_vehiculo == id_vehiculo
+        for a in recientes if a.vehiculo_id == id_vehiculo
     ]})
 
 
@@ -302,7 +304,7 @@ def alertas(request, id_vehiculo):
 @metodos("GET")
 def ultima(request, id_vehiculo):
     """Equivale a Obd2Controller.ultima: las 30 lecturas más recientes del vehículo."""
-    lecturas = Lectura.objects.filter(id_vehiculo=id_vehiculo).order_by("-id_lectura")[:30]
+    lecturas = Lectura.objects.filter(vehiculo_id=id_vehiculo).order_by("-id_lectura")[:30]
     return respuesta_json({"ok": True, "lecturas": [lectura_json(lectura, con_id=False) for lectura in lecturas]})
 
 
@@ -337,9 +339,9 @@ def conectar(request):
         unidad = unidad_de(tipo)
         nivel = calcular_nivel(tipo, valor)
         estado = estado_por_nivel(nivel)
-        Lectura.objects.create(id_vehiculo=v.id_vehiculo, nombre_sensor=s.nombre_sensor, tipo_sensor=tipo, valor=valor,
-                               unidad=unidad, nivel=nivel, estado=estado, fecha_lectura=ahora())
-        crear_alerta_si_corresponde(v.id_vehiculo, s.nombre_sensor, tipo, valor, nivel, " " + unidad)
+        Lectura.objects.create(vehiculo=v, placa_historica=v.placa, nombre_sensor=s.nombre_sensor, tipo_sensor=tipo,
+                               valor=valor, unidad=unidad, nivel=nivel, estado=estado, fecha_lectura=ahora())
+        crear_alerta_si_corresponde(v, s.nombre_sensor, tipo, valor, nivel, " " + unidad)
         lecturas.append({"nombreSensor": s.nombre_sensor, "tipoSensor": tipo, "valor": valor, "unidad": unidad,
                          "nivel": nivel, "estado": estado})
     respuesta["lecturas"] = lecturas
@@ -349,17 +351,34 @@ def conectar(request):
 @csrf_exempt
 @metodos("GET")
 def alertas_en_vivo(request):
-    """Devuelve las alertas más recientes para emisión de Web Push y Toast en navegador."""
+    """Devuelve las alertas más recientes filtrando por el cliente en sesión (o todas para admin)."""
+    modo = parametro(request, "modo", requerido=False) or ""
+    admin = admin_actual(request)
+    cliente = cliente_actual(request)
+
+    if admin is None and cliente is None:
+        return JsonResponse(
+            {"ok": False, "mensaje": "Sesión requerida.", "alertas": [], "total": 0},
+            status=403,
+            json_dumps_params={"ensure_ascii": False},
+        )
+
     desde_id = parametro(request, "desde_id", int, requerido=False) or 0
-    query = Alerta.objects.order_by("-id_alerta")
+    query = Alerta.objects.select_related("vehiculo").order_by("-id_alerta")
     if desde_id > 0:
         query = query.filter(id_alerta__gt=desde_id)
-    recientes = list(query[:10])
 
+    # Si no es el panel admin explícito y hay cliente en sesión, filtrar estrictamente sus vehículos.
+    if not (modo == "admin" and admin is not None) and cliente is not None:
+        query = query.filter(vehiculo__cliente=cliente)
+
+    recientes = list(query[:10])
     lista = []
     for a in recientes:
-        v = Vehiculo.objects.filter(pk=a.id_vehiculo).first()
-        placa = v.placa if v and v.placa else f"ID-{a.id_vehiculo}"
+        v = a.vehiculo
+        placa = (v.placa if v and v.placa else a.placa_historica) or (
+            f"ID-{a.vehiculo_id}" if a.vehiculo_id else "SIN-PLACA"
+        )
         nombre_v = v.nombre_vehiculo if v else ""
         lista.append({
             "id": a.id_alerta,
@@ -373,3 +392,55 @@ def alertas_en_vivo(request):
             "fecha": a.fecha_alerta.strftime("%H:%M:%S") if a.fecha_alerta else "",
         })
     return respuesta_json({"ok": True, "alertas": lista, "total": len(lista)})
+
+
+@metodos("POST")
+def alerta_mostrada(request, id_alerta: int):
+    """Marca como ENVIADO el registro NAVEGADOR de una alerta mostrada en el navegador (requiere login y CSRF)."""
+    admin = admin_actual(request)
+    cliente = cliente_actual(request)
+    if admin is None and cliente is None:
+        return JsonResponse(
+            {"ok": False, "mensaje": "Debes iniciar sesión."},
+            status=403,
+            json_dumps_params={"ensure_ascii": False},
+        )
+
+    alerta = Alerta.objects.select_related("vehiculo", "vehiculo__cliente").filter(pk=id_alerta).first()
+    if alerta is None:
+        return JsonResponse(
+            {"ok": False, "mensaje": "Alerta no encontrada."},
+            status=404,
+            json_dumps_params={"ensure_ascii": False},
+        )
+
+    if admin is None:
+        es_dueno = alerta.vehiculo is not None and alerta.vehiculo.cliente_id == cliente.pk
+        if not es_dueno:
+            return JsonResponse(
+                {"ok": False, "mensaje": "No tienes permisos sobre esta alerta."},
+                status=403,
+                json_dumps_params={"ensure_ascii": False},
+            )
+
+    actualizadas = NotificacionEnviada.objects.filter(alerta=alerta, canal="NAVEGADOR").update(
+        estado="ENVIADO",
+        detalle_error=None,
+    )
+    if actualizadas == 0:
+        v = alerta.vehiculo
+        placa = (v.placa if v and v.placa else alerta.placa_historica) or (
+            f"ID-{alerta.vehiculo_id}" if alerta.vehiculo_id else "SIN-PLACA"
+        )
+        correo_dest = v.cliente.correo if (v and v.cliente and v.cliente.correo) else "Panel Administrativo"
+        tipo_str = "FALLA CRÍTICA" if alerta.nivel >= 70 else "ADVERTENCIA"
+        NotificacionEnviada.objects.create(
+            alerta=alerta,
+            canal="NAVEGADOR",
+            destinatario=correo_dest,
+            asunto=f"AutoSen: {tipo_str}",
+            mensaje=f"Placa {placa} - {alerta.nombre_sensor} {alerta.nivel}%",
+            estado="ENVIADO",
+            detalle_error=None,
+        )
+    return respuesta_json({"ok": True, "estado": "ENVIADO"})

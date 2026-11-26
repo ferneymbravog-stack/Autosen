@@ -21,13 +21,17 @@ def atender_alerta_critica(sender, alerta, **kwargs):
     LOG.warning(
         "[OBSERVER] Alerta registrada -> Sensor '%s' (vehículo %s) nivel %s%% | %s",
         texto_java(alerta.nombre_sensor),
-        texto_java(alerta.id_vehiculo),
+        texto_java(alerta.vehiculo_id),
         texto_java(alerta.nivel),
         texto_java(alerta.mensaje),
     )
-    # Despacho automático de notificaciones multicanal (Email, WhatsApp, Telegram, WebPush)
+    # Despacho automático de notificaciones multicanal (Email, WhatsApp, Telegram y Navegador)
     try:
-        from core.notificaciones import despachar_notificacion_multicanal
-        despachar_notificacion_multicanal(alerta)
+        from django.conf import settings
+        from core import notificaciones
+        if getattr(settings, "NOTIFICACIONES_ASINCRONAS", False):
+            notificaciones.despachar_en_segundo_plano(alerta)
+        else:
+            notificaciones.despachar_notificacion_multicanal(alerta)
     except Exception as exc:
         LOG.error("[OBSERVER] Error al despachar notificaciones: %s", exc)

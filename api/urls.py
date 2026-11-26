@@ -15,4 +15,5 @@ urlpatterns = [
     path("api/obd2/ultima/<int:id_vehiculo>", views.ultima, name="api_obd2_ultima"),
     path("api/obd2/conectar", views.conectar, name="api_obd2_conectar"),
     path("api/alertas/en-vivo", views.alertas_en_vivo, name="api_alertas_en_vivo"),
+    path("api/alertas/<int:id_alerta>/mostrada", views.alerta_mostrada, name="api_alerta_mostrada"),
 ]

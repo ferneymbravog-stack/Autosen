@@ -179,6 +179,9 @@
                     <p class="page-date">{% now "l, d F Y" %}</p>
                 </div>
             <div class="top-actions">
+                <button id="btn-notificaciones" type="button" class="btn-bluetooth" style="border-color:rgba(99,102,241,.45);color:#a5b4fc;background:rgba(99,102,241,.1)" onclick="activarNotificaciones()">
+                    🔔 Activar notificaciones
+                </button>
                 <button id="btn-bluetooth" class="btn-bluetooth" onclick="toggleBluetooth()">
                     <div class="bt-dot" id="bt-dot"></div>
                     <span id="bt-label">◉ CONECTAR BLUETOOTH</span>
@@ -186,6 +189,7 @@
             </div>
         </div>
 
+        <div id="aviso-notificaciones" style="display:none;font-size:.8rem;color:var(--muted);background:rgba(148,163,184,.08);border:1px solid var(--border);border-radius:12px;padding:.65rem 1rem;margin-bottom:1.1rem"></div>
         <div id="bt-status" class="bt-status"></div>
         <div id="telemetry" class="telemetry-grid"></div>
 <!-- KPIs -->
@@ -357,6 +361,7 @@ async function toggleBluetooth() {
         statusBox.innerHTML = '<span style="color:var(--emerald)">📡 ' + data.mensaje + '</span>';
         renderLecturas(data.lecturas || []);
         actualizarKPIs(data.lecturas || []);
+        chequearAlertasEnVivo();
         timer = setInterval(async () => {
             try {
                 const rr = await fetch('/api/obd2/ultima/' + idVehiculo);
@@ -373,6 +378,99 @@ async function toggleBluetooth() {
         btn.disabled = false;
     }
 }
+</script>
+
+<script>
+const CSRF_TOKEN = "{{ csrf_token }}";
+let ultimoAlertaId = 0;
+
+function actualizarEstadoNotificaciones() {
+    const btnNotif = document.getElementById('btn-notificaciones');
+    const aviso = document.getElementById('aviso-notificaciones');
+    if (!btnNotif || !aviso) return;
+
+    if (!('Notification' in window)) {
+        btnNotif.disabled = true;
+        btnNotif.textContent = '🚫 Sin soporte de notificaciones';
+        aviso.style.display = 'block';
+        aviso.textContent = 'ℹ️ Tu navegador no soporta notificaciones de escritorio (API Notification).';
+        return;
+    }
+    if (Notification.permission === 'granted') {
+        btnNotif.textContent = '🔔 Notificaciones activas';
+        btnNotif.style.borderColor = 'rgba(52,211,153,.5)';
+        btnNotif.style.color = 'var(--emerald)';
+        aviso.style.display = 'none';
+    } else if (Notification.permission === 'denied') {
+        btnNotif.textContent = '🔕 Notificaciones bloqueadas';
+        aviso.style.display = 'block';
+        aviso.textContent = '🔕 El permiso de notificaciones fue denegado en el navegador. Puedes habilitarlo desde el ícono de permisos junto a la URL.';
+    } else {
+        btnNotif.textContent = '🔔 Activar notificaciones';
+        aviso.style.display = 'none';
+    }
+}
+
+function activarNotificaciones() {
+    if (!('Notification' in window)) {
+        actualizarEstadoNotificaciones();
+        return;
+    }
+    Notification.requestPermission().then(function () {
+        actualizarEstadoNotificaciones();
+    });
+}
+
+function reportarAlertaMostrada(idAlerta) {
+    fetch('/api/alertas/' + idAlerta + '/mostrada', {
+        method: 'POST',
+        headers: { 'X-CSRFToken': CSRF_TOKEN },
+        credentials: 'same-origin'
+    }).catch(function () {});
+}
+
+function mostrarNotificacionNavegador(a) {
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    const titulo = a.nivel >= 70 ? 'AutoSen: FALLA CRÍTICA' : 'AutoSen: ADVERTENCIA';
+    const cuerpo = 'Placa ' + a.placa + ' - ' + a.sensor + ' ' + a.nivel + '%';
+    try {
+        const notif = new Notification(titulo, { body: cuerpo });
+        notif.onclick = function () {
+            window.focus();
+            if (typeof this.close === 'function') this.close();
+        };
+        reportarAlertaMostrada(a.id);
+    } catch (e) {}
+}
+
+function chequearAlertasEnVivo() {
+    fetch('/api/alertas/en-vivo?desde_id=' + ultimoAlertaId, { credentials: 'same-origin' })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            if (data.ok && data.alertas && data.alertas.length > 0) {
+                data.alertas.slice().reverse().forEach(function (a) {
+                    if (a.id > ultimoAlertaId) {
+                        ultimoAlertaId = a.id;
+                        mostrarNotificacionNavegador(a);
+                    }
+                });
+            }
+        })
+        .catch(function () {});
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    actualizarEstadoNotificaciones();
+    fetch('/api/alertas/en-vivo', { credentials: 'same-origin' })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            if (data.ok && data.alertas && data.alertas.length > 0) {
+                ultimoAlertaId = data.alertas[0].id;
+            }
+            setInterval(chequearAlertasEnVivo, 4000);
+        })
+        .catch(function () {});
+});
 </script>
 
 <script>
