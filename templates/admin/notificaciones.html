@@ -19,14 +19,29 @@ button{font-family:inherit;cursor:pointer}
 .pill:hover{color:#fff;background:rgba(255,255,255,.06)}
 .pill.active{color:#fff;background:linear-gradient(135deg,rgba(46,196,182,.25),rgba(59,130,246,.15));border:1px solid rgba(46,196,182,.5)}
 .main{padding:2.2rem 2.5rem 3rem;max-width:1400px;margin:0 auto}
-.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.8rem;flex-wrap:wrap;gap:1rem}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem}
 .tag{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:var(--teal);margin-bottom:.4rem}
 .page-title{font-family:var(--font-display);font-weight:700;font-size:clamp(1.7rem,2.6vw,2.2rem)}
 .grad-text{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
-.filtros-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.2rem 1.4rem;margin-bottom:1.8rem;display:flex;gap:1rem;flex-wrap:wrap;align-items:center;justify-content:space-between}
+.flash{padding:.95rem 1.25rem;border-radius:14px;margin-bottom:1.4rem;font-size:.88rem;font-weight:600;display:flex;align-items:center;justify-content:space-between;gap:1rem}
+.flash-ok{background:rgba(34,197,94,.14);border:1px solid rgba(34,197,94,.45);color:#4ade80}
+.flash-error{background:rgba(239,68,68,.14);border:1px solid rgba(239,68,68,.45);color:#fca5a5}
+.probar-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.3rem 1.5rem;margin-bottom:1.5rem}
+.probar-title{font-family:var(--font-display);font-weight:700;font-size:1.05rem;margin-bottom:.35rem}
+.probar-sub{font-size:.82rem;color:var(--muted);margin-bottom:1rem}
+.probar-grid{display:flex;flex-wrap:wrap;gap:.9rem;align-items:center}
+.input-wa{background:var(--surface2);border:1px solid var(--border2);color:var(--text);padding:.56rem .9rem;border-radius:10px;font-family:var(--font-mono);font-size:.82rem;min-width:210px;outline:none}
+.btn-accion{display:inline-flex;align-items:center;gap:.4rem;padding:.58rem 1rem;border-radius:10px;border:1px solid var(--border2);background:rgba(255,255,255,.04);color:var(--text);font-size:.82rem;font-weight:600;transition:.2s}
+.btn-accion:hover{background:rgba(255,255,255,.1);transform:translateY(-1px)}
+.btn-tg{border-color:rgba(56,189,248,.45);color:#38bdf8;background:rgba(0,136,204,.12)}
+.btn-em{border-color:rgba(96,165,250,.45);color:#60a5fa;background:rgba(59,130,246,.12)}
+.btn-wa{border-color:rgba(37,211,102,.45);color:#25d366;background:rgba(37,211,102,.12)}
+.btn-retry{padding:.36rem .75rem;border-radius:8px;border:1px solid rgba(244,162,97,.5);background:rgba(244,162,97,.12);color:var(--gold);font-size:.74rem;font-weight:600;margin-top:.45rem}
+.btn-retry:hover{background:rgba(244,162,97,.22)}
+.filtros-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.2rem 1.4rem;margin-bottom:1.6rem;display:flex;gap:1rem;flex-wrap:wrap;align-items:center;justify-content:space-between}
 .filtros-box select{background:var(--surface2);border:1px solid var(--border2);color:var(--text);padding:.6rem 1rem;border-radius:10px;font-family:var(--font-body);outline:none}
 .table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow-x:auto}
-table{width:100%;border-collapse:collapse;min-width:850px}
+table{width:100%;border-collapse:collapse;min-width:920px}
 th{text-align:left;font:700 .68rem var(--font-mono);color:var(--muted);padding:14px 18px;border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.08em}
 td{padding:13px 18px;border-bottom:1px solid rgba(255,255,255,.05);font-size:.88rem;vertical-align:middle}
 tr:last-child td{border:0}tbody tr:hover{background:rgba(255,255,255,.025)}
@@ -35,11 +50,16 @@ tr:last-child td{border:0}tbody tr:hover{background:rgba(255,255,255,.025)}
 .badge-EMAIL{background:rgba(59,130,246,.14);color:#60a5fa;border:1px solid rgba(59,130,246,.4)}
 .badge-WHATSAPP{background:rgba(37,211,102,.14);color:#25d366;border:1px solid rgba(37,211,102,.4)}
 .badge-TELEGRAM{background:rgba(0,136,204,.14);color:#38bdf8;border:1px solid rgba(0,136,204,.4)}
-.badge-WEB_PUSH{background:rgba(245,158,11,.14);color:#f59e0b;border:1px solid rgba(245,158,11,.4)}
-.badge-estado{display:inline-block;padding:2px 8px;border-radius:6px;font:700 .62rem var(--font-mono)}
-.badge-ENVIADO{background:rgba(46,196,182,.14);color:var(--teal)}
+.badge-NAVEGADOR{background:rgba(245,158,11,.14);color:#f59e0b;border:1px solid rgba(245,158,11,.4)}
+.badge-estado{display:inline-block;padding:3px 9px;border-radius:6px;font:700 .64rem var(--font-mono);letter-spacing:.04em}
+.badge-ENVIADO{background:rgba(34,197,94,.16);color:#4ade80;border:1px solid rgba(34,197,94,.4)}
+.badge-FALLIDO{background:rgba(239,68,68,.16);color:#f87171;border:1px solid rgba(239,68,68,.4)}
+.badge-OMITIDO{background:rgba(156,163,175,.16);color:#9ca3af;border:1px solid rgba(156,163,175,.35)}
+.badge-EN_COLA{background:rgba(59,130,246,.16);color:#60a5fa;border:1px solid rgba(59,130,246,.4)}
+.detalle-err{margin-top:.4rem;font-size:.75rem;color:#fca5a5;max-width:260px;line-height:1.4}
+.detalle-omit{color:var(--muted)}
 .vacio{color:var(--muted);font-style:italic;text-align:center;padding:2.5rem}
-.msg-preview{max-width:450px;white-space:pre-wrap;font-family:var(--font-mono);font-size:.78rem;color:var(--muted);background:rgba(255,255,255,.03);padding:.5rem .8rem;border-radius:8px;border:1px solid rgba(255,255,255,.06)}
+.msg-preview{max-width:420px;white-space:pre-wrap;font-family:var(--font-mono);font-size:.76rem;color:var(--muted);background:rgba(255,255,255,.03);padding:.5rem .8rem;border-radius:8px;border:1px solid rgba(255,255,255,.06)}
 </style>
 </head>
 <body>
@@ -55,14 +75,46 @@ tr:last-child td{border:0}tbody tr:hover{background:rgba(255,255,255,.025)}
 <main class="main">
   <div class="topbar">
     <div>
-      <div class="tag">// Mensajería & Alertas Automáticas</div>
+      <div class="tag">// Servicios Externos & Alertas Reales</div>
       <h1 class="page-title">Historial de Notificaciones <span class="grad-text">Multicanal</span></h1>
-      <p style="color:var(--muted);font-size:.85rem;margin-top:.3rem">Registro de alertas despachadas automáticamente por Email, WhatsApp (al número del cliente), Telegram y Web Push.</p>
+      <p style="color:var(--muted);font-size:.85rem;margin-top:.3rem">Despacho real de alertas por Telegram Bot API, Gmail SMTP, WhatsApp Cloud API y notificaciones del navegador.</p>
     </div>
   </div>
 
+  {% if flash %}
+    <div class="flash {% if flash.tipo == 'ok' %}flash-ok{% else %}flash-error{% endif %}">
+      <span>{{ flash.texto }}</span>
+    </div>
+  {% endif %}
+
+  <!-- SECCIÓN PROBAR CANALES -->
+  <section class="probar-box">
+    <div class="probar-title">🔌 Probar canales</div>
+    <p class="probar-sub">Envía un mensaje de verificación (<code>✅ Prueba de conexión AutoSen</code>) para comprobar las credenciales configuradas en <code>.env</code>.</p>
+    <div class="probar-grid">
+      <form method="post" action="{% url 'admin_notificaciones_probar' %}">
+        {% csrf_token %}
+        <input type="hidden" name="canal" value="TELEGRAM">
+        <button type="submit" class="btn-accion btn-tg">🤖 Probar Telegram</button>
+      </form>
+
+      <form method="post" action="{% url 'admin_notificaciones_probar' %}">
+        {% csrf_token %}
+        <input type="hidden" name="canal" value="EMAIL">
+        <button type="submit" class="btn-accion btn-em" title="Se envía a {{ admin_correo }}">📧 Probar Email ({{ admin_correo }})</button>
+      </form>
+
+      <form method="post" action="{% url 'admin_notificaciones_probar' %}" style="display:inline-flex;gap:.5rem;flex-wrap:wrap;align-items:center">
+        {% csrf_token %}
+        <input type="hidden" name="canal" value="WHATSAPP">
+        <input type="text" name="telefono" class="input-wa" placeholder="Número ej: 3001234567" required>
+        <button type="submit" class="btn-accion btn-wa">💬 Probar WhatsApp</button>
+      </form>
+    </div>
+  </section>
+
   <div class="filtros-box">
-    <form method="get" style="display:flex;gap:1rem;align-items:center">
+    <form method="get" style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap">
       <span style="font-size:.85rem;color:var(--muted);font-weight:600">Canal:</span>
       <select name="canal" onchange="this.form.submit()">
         <option value="">Todos los canales</option>
@@ -70,12 +122,21 @@ tr:last-child td{border:0}tbody tr:hover{background:rgba(255,255,255,.025)}
           <option value="{{ c }}" {% if canal_filtro == c %}selected{% endif %}>{{ c }}</option>
         {% endfor %}
       </select>
-      {% if canal_filtro %}
-        <a href="{% url 'admin_notificaciones' %}" style="font-size:.8rem;color:var(--teal)">Limpiar filtro</a>
+
+      <span style="font-size:.85rem;color:var(--muted);font-weight:600">Estado:</span>
+      <select name="estado" onchange="this.form.submit()">
+        <option value="">Todos los estados</option>
+        {% for e in estados %}
+          <option value="{{ e }}" {% if estado_filtro == e %}selected{% endif %}>{{ e }}</option>
+        {% endfor %}
+      </select>
+
+      {% if canal_filtro or estado_filtro %}
+        <a href="{% url 'admin_notificaciones' %}" style="font-size:.8rem;color:var(--teal)">Limpiar filtros</a>
       {% endif %}
     </form>
     <div style="font-family:var(--font-mono);font-size:.8rem;color:var(--muted)">
-      Total despachadas: <b>{{ total }}</b>
+      Total registros: <b>{{ total }}</b>
     </div>
   </div>
 
@@ -88,12 +149,12 @@ tr:last-child td{border:0}tbody tr:hover{background:rgba(255,255,255,.025)}
           <th>Destinatario</th>
           <th>Asunto</th>
           <th>Mensaje Despachado</th>
-          <th>Estado</th>
+          <th>Estado / Detalle</th>
         </tr>
       </thead>
       <tbody>
         {% if not notificaciones %}
-          <tr><td colspan="6" class="vacio">No hay notificaciones registradas todavía. Las alertas se despachan automáticamente a cada destinatario cuando un sensor reporta desgastes o fallas críticas.</td></tr>
+          <tr><td colspan="6" class="vacio">No hay notificaciones que coincidan con el filtro seleccionado.</td></tr>
         {% endif %}
         {% for n in notificaciones %}
         <tr>
@@ -103,20 +164,31 @@ tr:last-child td{border:0}tbody tr:hover{background:rgba(255,255,255,.025)}
               {% if n.canal == "EMAIL" %}📧 EMAIL
               {% elif n.canal == "WHATSAPP" %}💬 WHATSAPP
               {% elif n.canal == "TELEGRAM" %}🤖 TELEGRAM
-              {% else %}🔔 WEB PUSH{% endif %}
+              {% else %}🔔 NAVEGADOR{% endif %}
             </span>
           </td>
           <td class="mono" style="font-size:.82rem">
             <b>{{ n.destinatario }}</b>
-            {% if n.canal == "WHATSAPP" and n.destinatario %}
+            {% if n.canal == "WHATSAPP" and n.destinatario and n.destinatario != "sin teléfono" %}
               <div>
-                <a href="https://api.whatsapp.com/send?phone={{ n.destinatario|urlencode }}&text={{ n.mensaje|urlencode }}" target="_blank" class="badge-canal badge-WHATSAPP" style="margin-top:.35rem;text-decoration:none;display:inline-flex">Abrir chat WhatsApp →</a>
+                <a href="https://api.whatsapp.com/send?phone={{ n.destinatario|urlencode }}&text={{ n.mensaje|urlencode }}" target="_blank" title="Respaldo manual en WhatsApp Web" class="badge-canal badge-WHATSAPP" style="margin-top:.35rem;text-decoration:none;display:inline-flex">Abrir chat WhatsApp →</a>
               </div>
             {% endif %}
           </td>
           <td style="font-weight:600;font-size:.85rem">{{ n.asunto }}</td>
           <td><div class="msg-preview">{{ n.mensaje }}</div></td>
-          <td><span class="badge-estado badge-{{ n.estado }}">{{ n.estado }}</span></td>
+          <td>
+            <div><span class="badge-estado badge-{{ n.estado }}">{{ n.estado }}</span></div>
+            {% if n.detalle_error %}
+              <div class="detalle-err {% if n.estado == 'OMITIDO' %}detalle-omit{% endif %}">{{ n.detalle_error }}</div>
+            {% endif %}
+            {% if n.estado == "FALLIDO" and n.canal != "NAVEGADOR" %}
+              <form method="post" action="{% url 'admin_notificacion_reintentar' n.id_notificacion %}">
+                {% csrf_token %}
+                <button type="submit" class="btn-retry">↻ Reintentar</button>
+              </form>
+            {% endif %}
+          </td>
         </tr>
         {% endfor %}
       </tbody>

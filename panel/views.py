@@ -1,15 +1,22 @@
 """Vistas del panel de administración (equivalen a AdminController)."""
+from datetime import datetime
+import html
+
 from django.shortcuts import get_object_or_404, redirect, render
 
-from core.auditoria import registrar_auditoria
-from core.auth import (admin_requerido, cerrar_sesion_admin, cifrar_contrasena,
+from core.auditoria import auditar_autenticacion, registrar_auditoria
+from core.auth import (admin_actual, admin_requerido, cerrar_sesion_admin, cifrar_contrasena,
                        gestion_admin_requerido, iniciar_sesion_admin, superadmin_requerido,
                        verificar_contrasena)
 from core.consultas import igual_mysql, placa_duplicada
 from core.http import metodos, parametro
 from core.models import Cliente, NotificacionEnviada, RegistroAuditoria, Sensor, Usuario, Vehiculo
-from core.normalizacion import normalizar_modelo, normalizar_placa, normalizar_tipo_placa
+from core.normalizacion import (normalizar_modelo, normalizar_placa, normalizar_telefono_whatsapp,
+                                normalizar_tipo_placa)
+from core.notificaciones import reintentar_notificacion
 from core.patrones.singleton import UmbralesReporte
+from core.servicios_externos import enviar_email, enviar_telegram, enviar_whatsapp
+from core.utilidades import ahora
 from core.validaciones import validar_largos, validar_persona, validar_vehiculo
 
 PLACA_DUPLICADA = "Ya existe un vehículo registrado con esa placa."
@@ -27,15 +34,25 @@ def login(request):
     contrasena = request.POST.get("contrasena", "")
     usuario = igual_mysql(Usuario.objects.all(), "correo", correo).first()
     if usuario is None or not verificar_contrasena(contrasena, usuario.contrasena):
+        auditar_autenticacion(request, correo, exito=False, usuario=usuario)
         return redirect("/admin/login?error")
     iniciar_sesion_admin(request, usuario)
-    registrar_auditoria(request, "LOGIN", "SISTEMA", usuario.id_usuario,
-                        f"Inicio de sesión exitoso como {usuario.rol} ({usuario.correo})")
+    auditar_autenticacion(request, usuario.correo, exito=True, usuario=usuario)
     return redirect("/admin")
 
 
 def logout(request):
-    """Equivale al logout de Spring en /admin/logout."""
+    """Equivale al logout de Spring en /admin/logout y audita el cierre de sesión."""
+    usuario = admin_actual(request)
+    if usuario is not None:
+        registrar_auditoria(
+            request,
+            "LOGOUT",
+            "SESION",
+            usuario.id_usuario,
+            f"Cierre de sesión como {usuario.rol} ({usuario.correo})",
+            usuario=usuario,
+        )
     cerrar_sesion_admin(request)
     return redirect("/admin/login")
 
@@ -408,7 +425,7 @@ def sensor_editar(request, id):
     if nivel >= 40:
         from api.obd2 import crear_alerta_si_corresponde
         crear_alerta_si_corresponde(
-            vehiculo.id_vehiculo, sensor.nombre_sensor, sensor.tipo_sensor,
+            vehiculo, sensor.nombre_sensor, sensor.tipo_sensor,
             valor=float(nivel), nivel=nivel, sufijo_unidad="%"
         )
     accion = "CALIBRAR" if nivel != nivel_previo else "EDITAR"
@@ -500,46 +517,168 @@ def usuario_eliminar(request, id):
 # ---------------------------------------------------------------------------
 # Auditoría y Notificaciones
 # ---------------------------------------------------------------------------
+def _parsear_fecha_filtro(valor: str, fin_de_dia: bool = False) -> datetime | None:
+    """Convierte 'AAAA-MM-DD' en datetime al inicio o fin del día; devuelve None si no es válida."""
+    if not valor:
+        return None
+    try:
+        base = datetime.strptime(valor, "%Y-%m-%d")
+    except ValueError:
+        return None
+    if fin_de_dia:
+        return base.replace(hour=23, minute=59, second=59, microsecond=999999)
+    return base
+
+
 @superadmin_requerido
 @metodos("GET")
 def auditoria_lista(request):
-    """Muestra la bitácora completa de auditoría del sistema."""
+    """Muestra la bitácora inmutable de auditoría con filtros por admin, acción, entidad y fechas."""
+    usuario_filtro = request.GET.get("usuario", "").strip()
     accion_filtro = request.GET.get("accion", "").strip().upper()
     entidad_filtro = request.GET.get("entidad", "").strip().upper()
+    fecha_desde = request.GET.get("fecha_desde", "").strip()
+    fecha_hasta = request.GET.get("fecha_hasta", "").strip()
 
-    registros = RegistroAuditoria.objects.all()
+    registros = RegistroAuditoria.objects.select_related("usuario").all()
+    if usuario_filtro == "sin_usuario":
+        registros = registros.filter(usuario__isnull=True)
+    elif usuario_filtro.isdigit():
+        registros = registros.filter(usuario_id=int(usuario_filtro))
     if accion_filtro:
         registros = registros.filter(accion=accion_filtro)
     if entidad_filtro:
         registros = registros.filter(entidad=entidad_filtro)
 
+    dt_desde = _parsear_fecha_filtro(fecha_desde, fin_de_dia=False)
+    dt_hasta = _parsear_fecha_filtro(fecha_hasta, fin_de_dia=True)
+    if dt_desde is not None:
+        registros = registros.filter(fecha__gte=dt_desde)
+    if dt_hasta is not None:
+        registros = registros.filter(fecha__lte=dt_hasta)
+
     contexto = {
         "registros": list(registros[:200]),
         "total": registros.count(),
+        "administradores": list(Usuario.objects.all()),
+        "usuario_filtro": usuario_filtro,
         "accion_filtro": accion_filtro,
         "entidad_filtro": entidad_filtro,
-        "acciones": ["CREAR", "EDITAR", "ELIMINAR", "CALIBRAR", "BLOQUEAR", "ACTIVAR", "LOGIN", "TEST"],
-        "entidades": ["CLIENTE", "VEHICULO", "SENSOR", "USUARIO", "SISTEMA", "ALERTA"],
+        "fecha_desde": fecha_desde,
+        "fecha_hasta": fecha_hasta,
+        "acciones": [
+            "CREAR", "EDITAR", "ELIMINAR", "CALIBRAR", "BLOQUEAR", "ACTIVAR",
+            "LOGIN", "LOGIN_FALLIDO", "LOGOUT", "TEST", "REINTENTAR",
+        ],
+        "entidades": ["CLIENTE", "VEHICULO", "SENSOR", "USUARIO", "SISTEMA", "SESION", "ALERTA", "NOTIFICACION"],
     }
     return render(request, "admin/auditoria.html", contexto)
+
+
+def _guardar_flash_notificaciones(request, exito: bool, texto: str) -> None:
+    """Almacena un mensaje flash temporal en la sesión del administrador."""
+    request.session["flash_notificaciones"] = {"tipo": "ok" if exito else "error", "texto": texto}
 
 
 @admin_requerido
 @metodos("GET")
 def notificaciones_lista(request):
-    """Muestra el historial de notificaciones multicanal despachadas."""
+    """Muestra el historial de notificaciones multicanal con filtros por canal y estado."""
     canal_filtro = request.GET.get("canal", "").strip().upper()
+    estado_filtro = request.GET.get("estado", "").strip().upper()
     notificaciones = NotificacionEnviada.objects.all()
     if canal_filtro:
         notificaciones = notificaciones.filter(canal=canal_filtro)
+    if estado_filtro:
+        notificaciones = notificaciones.filter(estado=estado_filtro)
 
     contexto = {
         "notificaciones": list(notificaciones[:200]),
         "total": notificaciones.count(),
         "canal_filtro": canal_filtro,
-        "canales": ["EMAIL", "WHATSAPP", "TELEGRAM", "WEB_PUSH"],
+        "estado_filtro": estado_filtro,
+        "canales": ["EMAIL", "WHATSAPP", "TELEGRAM", "NAVEGADOR"],
+        "estados": ["ENVIADO", "FALLIDO", "OMITIDO", "EN_COLA"],
+        "flash": request.session.pop("flash_notificaciones", None),
     }
     return render(request, "admin/notificaciones.html", contexto)
+
+
+@admin_requerido
+@metodos("POST")
+def notificaciones_probar(request):
+    """Envía un mensaje de prueba al canal elegido (Telegram, Email o WhatsApp) y registra auditoría."""
+    canal = (parametro(request, "canal", requerido=False) or "").strip().upper()
+    marca_tiempo = ahora().strftime("%Y-%m-%d %H:%M:%S")
+    mensaje_prueba = f"✅ Prueba de conexión AutoSen ({marca_tiempo})"
+
+    if canal == "TELEGRAM":
+        exito, detalle = enviar_telegram(f"<b>{html.escape(mensaje_prueba)}</b>")
+        registrar_auditoria(
+            request, "TEST", "NOTIFICACION", "TELEGRAM",
+            f"Prueba de canal Telegram ejecutada ({'éxito' if exito else 'fallo'}: {detalle})",
+        )
+        _guardar_flash_notificaciones(request, exito, f"Telegram: {detalle}")
+    elif canal == "EMAIL":
+        correo_admin = (request.admin.correo or "").strip()
+        if not correo_admin:
+            exito, detalle = False, "Tu cuenta de administrador no tiene un correo válido."
+        else:
+            html_prueba = (
+                "<div style='font-family:Arial,sans-serif;padding:18px;border:1px solid #e5e7eb;border-radius:10px'>"
+                f"<h2 style='margin:0 0 8px;color:#0d9488'>AutoSen</h2><p>{html.escape(mensaje_prueba)}</p></div>"
+            )
+            exito, detalle = enviar_email(
+                correo_admin, "✅ Prueba de conexión AutoSen", mensaje_prueba, html_prueba
+            )
+        registrar_auditoria(
+            request, "TEST", "NOTIFICACION", "EMAIL",
+            f"Prueba de canal Email a {correo_admin or 'sin correo'} ({'éxito' if exito else 'fallo'}: {detalle})",
+        )
+        _guardar_flash_notificaciones(request, exito, f"Email ({correo_admin or 'sin correo'}): {detalle}")
+    elif canal == "WHATSAPP":
+        telefono_raw = (parametro(request, "telefono", requerido=False) or "").strip()
+        numero_norm = normalizar_telefono_whatsapp(telefono_raw)
+        if not numero_norm:
+            exito, detalle = False, "Teléfono inválido. Ingresa un celular válido (ej. 3001234567 o +57 300 123 4567)."
+        else:
+            exito, detalle = enviar_whatsapp(numero_norm, mensaje_prueba)
+        registrar_auditoria(
+            request, "TEST", "NOTIFICACION", "WHATSAPP",
+            f"Prueba de canal WhatsApp a {numero_norm or telefono_raw or 'vacío'} ({'éxito' if exito else 'fallo'}: {detalle})",
+        )
+        _guardar_flash_notificaciones(request, exito, f"WhatsApp: {detalle}")
+    else:
+        _guardar_flash_notificaciones(request, False, "Selecciona un canal válido para probar.")
+
+    return redirect("/admin/notificaciones")
+
+
+@admin_requerido
+@metodos("POST")
+def notificacion_reintentar(request, id: int):
+    """Reintenta el envío de una notificación en estado FALLIDO (Telegram, Email o WhatsApp)."""
+    notif = get_object_or_404(NotificacionEnviada, pk=id)
+    if notif.estado != "FALLIDO" or notif.canal not in ("TELEGRAM", "EMAIL", "WHATSAPP"):
+        _guardar_flash_notificaciones(
+            request, False, "Solo se pueden reintentar notificaciones FALLIDAS de Telegram, Email o WhatsApp."
+        )
+        return redirect("/admin/notificaciones")
+
+    exito, detalle = reintentar_notificacion(notif)
+    registrar_auditoria(
+        request,
+        "REINTENTAR",
+        "NOTIFICACION",
+        notif.pk,
+        f"Reintento de notificación #{notif.pk} ({notif.canal} -> {notif.destinatario}): {notif.estado} ({detalle})",
+    )
+    _guardar_flash_notificaciones(
+        request,
+        exito,
+        f"Reintento {notif.canal} (#{notif.pk}): {'Enviado correctamente' if exito else detalle}",
+    )
+    return redirect("/admin/notificaciones")
 
 
 @admin_requerido
@@ -565,7 +704,7 @@ def simular_alerta(request):
     sensor_tipo = sensor.tipo_sensor if sensor else "ECT"
 
     alerta = crear_alerta_si_corresponde(
-        id_vehiculo=v.id_vehiculo,
+        vehiculo=v,
         nombre_sensor=sensor_nombre,
         tipo_sensor=sensor_tipo,
         valor=98.0,

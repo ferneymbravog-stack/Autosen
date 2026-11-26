@@ -214,9 +214,9 @@ tr:last-child td{border:0}tbody tr{transition:background .2s}tbody tr:hover{back
     {% endif %}
   </div>
   <div class="top-actions">
-    <!-- BOTÓN ACTIVAR WEB PUSH -->
-    <button id="btnPush" onclick="activarWebPush()" class="btn-mini" style="border-color:rgba(34,211,238,.4);color:var(--teal)">
-      🔔 Activar Web Push
+    <!-- BOTÓN ACTIVAR NOTIFICACIONES -->
+    <button id="btnPush" type="button" onclick="activarNotificaciones()" class="btn-mini" style="border-color:rgba(34,211,238,.4);color:var(--teal)">
+      🔔 Activar notificaciones
     </button>
 
     {% if es_superadmin %}
@@ -232,6 +232,8 @@ tr:last-child td{border:0}tbody tr{transition:background .2s}tbody tr:hover{back
     <a href="{% url 'admin_reportes' %}" class="btn-mini"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>Reportes</a>
   </div>
 </div>
+
+<div id="avisoNotificacionesAdmin" style="display:none;font-size:.8rem;color:var(--muted);background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:12px;padding:.65rem 1rem;margin-bottom:1.2rem"></div>
 
 <!-- BANNER DE INCIDENCIAS PARA SOPORTE O CUANDO HAY FALLAS -->
 {% if totalFallas > 0 or totalAdvertencias > 0 %}
@@ -553,47 +555,65 @@ tr:last-child td{border:0}tbody tr{transition:background .2s}tbody tr:hover{back
     if (best) best.classList.add('active');
 })();
 
-// Web Push Notifications & Polling en Vivo
+// Notificaciones del navegador (API Notification) & Polling en Vivo
+const CSRF_TOKEN = "{{ csrf_token }}";
 let ultimoAlertaId = 0;
 
 function actualizarBotonPush() {
     const btn = document.getElementById("btnPush");
+    const aviso = document.getElementById("avisoNotificacionesAdmin");
     if (!btn) return;
     if (!("Notification" in window)) {
-        btn.innerHTML = "🚫 Web Push no soportado";
+        btn.innerHTML = "🚫 Sin soporte de notificaciones";
         btn.disabled = true;
+        if (aviso) {
+            aviso.style.display = "block";
+            aviso.textContent = "ℹ️ Este navegador no soporta la API Notification de escritorio.";
+        }
         return;
     }
     if (Notification.permission === "granted") {
-        btn.innerHTML = "🔔 Web Push Activo";
+        btn.innerHTML = "🔔 Notificaciones activas";
         btn.style.borderColor = "rgba(46,196,182,.6)";
         btn.style.color = "var(--teal)";
+        if (aviso) aviso.style.display = "none";
+    } else if (Notification.permission === "denied") {
+        btn.innerHTML = "🔕 Notificaciones bloqueadas";
+        if (aviso) {
+            aviso.style.display = "block";
+            aviso.textContent = "🔕 El permiso de notificaciones fue denegado en el navegador. Habilítalo en los permisos del sitio si deseas recibir avisos.";
+        }
     } else {
-        btn.innerHTML = "🔔 Activar Web Push";
+        btn.innerHTML = "🔔 Activar notificaciones";
+        if (aviso) aviso.style.display = "none";
     }
 }
 
-function activarWebPush() {
+function activarNotificaciones() {
     if (!("Notification" in window)) {
-        alert("Tu navegador no soporta la API de notificaciones Web Push.");
+        actualizarBotonPush();
         return;
     }
     Notification.requestPermission().then(function (perm) {
         actualizarBotonPush();
         if (perm === "granted") {
             reproducirSonidoAlerta();
-            new Notification("🔔 AutoSen Notificaciones", {
-                body: "¡Web Push activado! Recibirás alertas críticas de telemetría aquí.",
-                icon: "/static/favicon.ico"
-            });
             mostrarToast({
                 nivel: 0,
-                sensor: "Notificaciones del Sistema",
-                vehiculo: "Navegador",
-                mensaje: "¡Web Push activado con éxito! Recibirás avisos ante fallas críticas y advertencias."
+                sensor: "Notificaciones del navegador",
+                vehiculo: "Panel Admin",
+                mensaje: "¡Notificaciones activadas! Recibirás alertas críticas y advertencias aquí."
             });
         }
     });
+}
+
+function reportarAlertaMostrada(idAlerta) {
+    fetch("/api/alertas/" + idAlerta + "/mostrada", {
+        method: "POST",
+        headers: { "X-CSRFToken": CSRF_TOKEN },
+        credentials: "same-origin"
+    }).catch(function () {});
 }
 
 function reproducirSonidoAlerta() {
@@ -645,20 +665,24 @@ function mostrarToast(alerta) {
 }
 
 function chequearAlertasEnVivo() {
-    fetch('/api/alertas/en-vivo?desde_id=' + ultimoAlertaId)
+    fetch('/api/alertas/en-vivo?modo=admin&desde_id=' + ultimoAlertaId, { credentials: 'same-origin' })
         .then(r => r.json())
         .then(data => {
             if (data.ok && data.alertas && data.alertas.length > 0) {
-                data.alertas.reverse().forEach(a => {
+                data.alertas.slice().reverse().forEach(a => {
                     if (a.id > ultimoAlertaId) {
                         ultimoAlertaId = a.id;
                         reproducirSonidoAlerta();
                         mostrarToast(a);
-                        if (Notification.permission === "granted") {
-                            new Notification("🚨 Alerta AutoSen: " + a.sensor, {
-                                body: (a.nivel >= 70 ? 'Falla Crítica (' : 'Advertencia (') + a.nivel + '%): ' + a.vehiculo + ' - ' + a.mensaje,
-                                icon: "/static/favicon.ico"
-                            });
+                        if ("Notification" in window && Notification.permission === "granted") {
+                            const titulo = a.nivel >= 70 ? "AutoSen: FALLA CRÍTICA" : "AutoSen: ADVERTENCIA";
+                            const cuerpo = "Placa " + a.placa + " - " + a.sensor + " " + a.nivel + "%";
+                            const notif = new Notification(titulo, { body: cuerpo });
+                            notif.onclick = function () {
+                                window.focus();
+                                if (typeof this.close === "function") this.close();
+                            };
+                            reportarAlertaMostrada(a.id);
                         }
                     }
                 });
@@ -669,7 +693,7 @@ function chequearAlertasEnVivo() {
 
 document.addEventListener("DOMContentLoaded", function () {
     actualizarBotonPush();
-    fetch('/api/alertas/en-vivo')
+    fetch('/api/alertas/en-vivo?modo=admin', { credentials: 'same-origin' })
         .then(r => r.json())
         .then(data => {
             if (data.ok && data.alertas && data.alertas.length > 0) {

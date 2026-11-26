@@ -31,5 +31,7 @@ urlpatterns = [
     # Auditoría y Notificaciones
     path("admin/auditoria", views.auditoria_lista, name="admin_auditoria"),
     path("admin/notificaciones", views.notificaciones_lista, name="admin_notificaciones"),
+    path("admin/notificaciones/probar", views.notificaciones_probar, name="admin_notificaciones_probar"),
+    path("admin/notificaciones/<int:id>/reintentar", views.notificacion_reintentar, name="admin_notificacion_reintentar"),
     path("admin/simular-alerta", views.simular_alerta, name="admin_simular_alerta"),
 ]

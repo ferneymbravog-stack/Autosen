@@ -23,10 +23,10 @@ button{font-family:inherit;cursor:pointer}
 .tag{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:#f59e0b;margin-bottom:.4rem}
 .page-title{font-family:var(--font-display);font-weight:700;font-size:clamp(1.7rem,2.6vw,2.2rem)}
 .grad-text{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
-.filtros-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.2rem 1.4rem;margin-bottom:1.8rem;display:flex;gap:1rem;flex-wrap:wrap;align-items:center}
-.filtros-box select{background:var(--surface2);border:1px solid var(--border2);color:var(--text);padding:.6rem 1rem;border-radius:10px;font-family:var(--font-body);outline:none}
+.filtros-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.2rem 1.4rem;margin-bottom:1.8rem;display:flex;gap:.85rem;flex-wrap:wrap;align-items:center}
+.filtros-box select,.filtros-box input[type="date"]{background:var(--surface2);border:1px solid var(--border2);color:var(--text);padding:.55rem .9rem;border-radius:10px;font-family:var(--font-body);font-size:.85rem;outline:none}
 .table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow-x:auto}
-table{width:100%;border-collapse:collapse;min-width:850px}
+table{width:100%;border-collapse:collapse;min-width:900px}
 th{text-align:left;font:700 .68rem var(--font-mono);color:var(--muted);padding:14px 18px;border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.08em}
 td{padding:13px 18px;border-bottom:1px solid rgba(255,255,255,.05);font-size:.88rem;vertical-align:middle}
 tr:last-child td{border:0}tbody tr:hover{background:rgba(255,255,255,.025)}
@@ -39,9 +39,13 @@ tr:last-child td{border:0}tbody tr:hover{background:rgba(255,255,255,.025)}
 .badge-BLOQUEAR{background:rgba(230,57,70,.14);color:var(--red2);border:1px solid rgba(230,57,70,.4)}
 .badge-ACTIVAR{background:rgba(46,196,182,.14);color:var(--teal);border:1px solid rgba(46,196,182,.4)}
 .badge-LOGIN{background:rgba(168,85,247,.14);color:#c084fc;border:1px solid rgba(168,85,247,.4)}
+.badge-LOGIN_FALLIDO{background:rgba(239,68,68,.18);color:#f87171;border:1px solid rgba(239,68,68,.5)}
+.badge-LOGOUT{background:rgba(148,163,184,.15);color:#cbd5e1;border:1px solid rgba(148,163,184,.4)}
 .badge-TEST{background:rgba(244,162,97,.14);color:var(--gold);border:1px solid rgba(244,162,97,.4)}
-.btn-mini{display:inline-flex;align-items:center;gap:.35rem;padding:.5rem .9rem;border-radius:9px;border:1px solid var(--border2);background:rgba(255,255,255,.04);color:var(--text);font:600 .75rem var(--font-body);cursor:pointer}
+.badge-REINTENTAR{background:rgba(56,189,248,.14);color:#38bdf8;border:1px solid rgba(56,189,248,.4)}
+.btn-mini{display:inline-flex;align-items:center;gap:.35rem;padding:.55rem .95rem;border-radius:9px;border:1px solid var(--border2);background:rgba(255,255,255,.04);color:var(--text);font:600 .78rem var(--font-body);cursor:pointer}
 .btn-mini:hover{background:rgba(255,255,255,.09)}
+.btn-filtrar{border-color:rgba(245,158,11,.5);background:rgba(245,158,11,.16);color:#fcd34d}
 .vacio{color:var(--muted);font-style:italic;text-align:center;padding:2.5rem}
 </style>
 </head>
@@ -60,7 +64,7 @@ tr:last-child td{border:0}tbody tr:hover{background:rgba(255,255,255,.025)}
     <div>
       <div class="tag">// Trazabilidad & Seguridad</div>
       <h1 class="page-title">Bitácora de <span class="grad-text">Auditoría</span></h1>
-      <p style="color:var(--muted);font-size:.85rem;margin-top:.3rem">Registro inmutable de acciones realizadas por administradores y usuarios en la plataforma.</p>
+      <p style="color:var(--muted);font-size:.85rem;margin-top:.3rem">Registro inmutable de acciones administrativas y eventos de autenticación del panel.</p>
     </div>
     <div>
       <span style="font-family:var(--font-mono);font-size:.8rem;color:var(--muted)">Total registros: <b>{{ total }}</b></span>
@@ -68,20 +72,47 @@ tr:last-child td{border:0}tbody tr:hover{background:rgba(255,255,255,.025)}
   </div>
 
   <form method="get" class="filtros-box">
-    <span style="font-size:.85rem;color:var(--muted);font-weight:600">Filtrar por:</span>
+    <span style="font-size:.84rem;color:var(--muted);font-weight:600">Filtrar:</span>
+
+    <select name="usuario" onchange="this.form.submit()">
+      <option value="">Todos los administradores</option>
+      {% for u in administradores %}
+        <option value="{{ u.id_usuario }}" {% if usuario_filtro == u.id_usuario|stringformat:"s" %}selected{% endif %}>
+          {{ u.nombre }} ({{ u.correo }})
+        </option>
+      {% endfor %}
+      <option value="sin_usuario" {% if usuario_filtro == "sin_usuario" %}selected{% endif %}>
+        Sin usuario activo / eliminados
+      </option>
+    </select>
+
     <select name="accion" onchange="this.form.submit()">
       <option value="">Todas las acciones</option>
       {% for a in acciones %}
         <option value="{{ a }}" {% if accion_filtro == a %}selected{% endif %}>{{ a }}</option>
       {% endfor %}
     </select>
+
     <select name="entidad" onchange="this.form.submit()">
       <option value="">Todas las entidades</option>
       {% for e in entidades %}
         <option value="{{ e }}" {% if entidad_filtro == e %}selected{% endif %}>{{ e }}</option>
       {% endfor %}
     </select>
-    {% if accion_filtro or entidad_filtro %}
+
+    <label style="font-size:.8rem;color:var(--muted);display:inline-flex;align-items:center;gap:.4rem">
+      Desde:
+      <input type="date" name="fecha_desde" value="{{ fecha_desde }}">
+    </label>
+
+    <label style="font-size:.8rem;color:var(--muted);display:inline-flex;align-items:center;gap:.4rem">
+      Hasta:
+      <input type="date" name="fecha_hasta" value="{{ fecha_hasta }}">
+    </label>
+
+    <button type="submit" class="btn-mini btn-filtrar">Aplicar</button>
+
+    {% if usuario_filtro or accion_filtro or entidad_filtro or fecha_desde or fecha_hasta %}
       <a href="{% url 'admin_auditoria' %}" class="btn-mini">Limpiar filtros</a>
     {% endif %}
   </form>
@@ -91,7 +122,7 @@ tr:last-child td{border:0}tbody tr:hover{background:rgba(255,255,255,.025)}
       <thead>
         <tr>
           <th>Fecha / Hora</th>
-          <th>Usuario</th>
+          <th>Administrador</th>
           <th>Rol</th>
           <th>Acción</th>
           <th>Entidad</th>
@@ -106,7 +137,16 @@ tr:last-child td{border:0}tbody tr:hover{background:rgba(255,255,255,.025)}
         {% for r in registros %}
         <tr>
           <td class="mono" style="font-size:.78rem;color:var(--muted);white-space:nowrap">{{ r.fecha|date:"Y-m-d H:i:s" }}</td>
-          <td><b>{{ r.usuario_correo }}</b></td>
+          <td>
+            {% if r.usuario %}
+              <div><b>{{ r.usuario.nombre }}</b></div>
+              <div class="mono" style="font-size:.73rem;color:var(--muted)">{{ r.usuario_correo }}</div>
+            {% elif r.usuario_rol == "NO_REGISTRADO" or r.usuario_rol == "SISTEMA" %}
+              <div><b>{{ r.usuario_correo }}</b> <span style="font-size:.74rem;color:var(--muted)">(no registrado)</span></div>
+            {% else %}
+              <div><b>{{ r.usuario_correo }}</b> <span style="font-size:.74rem;color:#fca5a5">(usuario eliminado)</span></div>
+            {% endif %}
+          </td>
           <td><span class="mono" style="font-size:.75rem">{{ r.usuario_rol }}</span></td>
           <td><span class="badge-accion badge-{{ r.accion }}">{{ r.accion }}</span></td>
           <td class="mono" style="font-size:.8rem;color:#fca5a5">{{ r.entidad }}{% if r.entidad_id %} #{{ r.entidad_id }}{% endif %}</td>
