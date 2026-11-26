@@ -99,8 +99,11 @@ class Lectura(models.Model):
     """Medición recibida del escáner OBD2 (tabla lecturas)."""
 
     id_lectura = models.AutoField(primary_key=True, db_column="Id_lectura")
-    # Número sin clave foránea (F3): el historial se conserva aunque se borre el vehículo.
-    id_vehiculo = models.IntegerField(db_index=True, db_column="Id_vehiculo")
+    # SET_NULL conserva el historial cuando se elimina el vehículo (F3).
+    vehiculo = models.ForeignKey(
+        Vehiculo, on_delete=models.SET_NULL, null=True, blank=True, db_column="Id_vehiculo", related_name="lecturas"
+    )
+    placa_historica = models.CharField(max_length=10, null=True, blank=True)
     nombre_sensor = models.CharField(max_length=120, db_column="Nombre_sensor")
     tipo_sensor = models.CharField(max_length=50, db_column="Tipo_sensor")
     valor = models.FloatField(db_column="Valor")
@@ -121,8 +124,11 @@ class Alerta(models.Model):
     """Alerta generada por una lectura con nivel de advertencia o falla (tabla alertas)."""
 
     id_alerta = models.AutoField(primary_key=True, db_column="Id_alerta")
-    # Número sin clave foránea (F3), igual que en Lectura.
-    id_vehiculo = models.IntegerField(db_index=True, db_column="Id_vehiculo")
+    # SET_NULL conserva el historial cuando se elimina el vehículo (F3).
+    vehiculo = models.ForeignKey(
+        Vehiculo, on_delete=models.SET_NULL, null=True, blank=True, db_column="Id_vehiculo", related_name="alertas"
+    )
+    placa_historica = models.CharField(max_length=10, null=True, blank=True)
     nombre_sensor = models.CharField(max_length=120, db_column="Nombre_sensor")
     tipo_sensor = models.CharField(max_length=50, db_column="Tipo_sensor")
     valor = models.FloatField(db_column="Valor")
@@ -141,9 +147,12 @@ class Alerta(models.Model):
 
 
 class RegistroAuditoria(models.Model):
-    """Registro de auditoría del sistema para trazabilidad de acciones críticas."""
+    """Registro inmutable de auditoría para acciones de administradores y acceso al panel."""
 
     id_auditoria = models.AutoField(primary_key=True)
+    usuario = models.ForeignKey(
+        Usuario, on_delete=models.SET_NULL, null=True, blank=True, related_name="registros_auditoria"
+    )
     usuario_correo = models.CharField(max_length=100)
     usuario_rol = models.CharField(max_length=30)
     accion = models.CharField(max_length=30)  # CREAR, EDITAR, ELIMINAR, CALIBRAR, BLOQUEAR, ACTIVAR, LOGIN
@@ -162,14 +171,15 @@ class RegistroAuditoria(models.Model):
 
 
 class NotificacionEnviada(models.Model):
-    """Historial de notificaciones multicanal (Email, WhatsApp, Telegram, WebPush)."""
+    """Historial de notificaciones multicanal (Email, WhatsApp, Telegram, Navegador)."""
 
     id_notificacion = models.AutoField(primary_key=True)
-    canal = models.CharField(max_length=20)  # EMAIL, WHATSAPP, TELEGRAM, WEB_PUSH
+    canal = models.CharField(max_length=20)  # EMAIL, WHATSAPP, TELEGRAM, NAVEGADOR
     destinatario = models.CharField(max_length=100)
     asunto = models.CharField(max_length=150)
     mensaje = models.TextField()
-    estado = models.CharField(max_length=20, default="ENVIADO")  # ENVIADO, PENDIENTE, FALLIDO
+    estado = models.CharField(max_length=20, default="ENVIADO")  # ENVIADO, FALLIDO, OMITIDO, EN_COLA
+    detalle_error = models.TextField(null=True, blank=True)
     fecha_envio = models.DateTimeField(auto_now_add=True)
     alerta = models.ForeignKey(Alerta, on_delete=models.SET_NULL, null=True, blank=True, related_name="notificaciones")
 

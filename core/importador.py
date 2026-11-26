@@ -75,14 +75,17 @@ def importar(sql: str, limpiar: bool, avisos: list[str] | None = None) -> dict[s
                     raise ErrorImportacion(f"La tabla {tabla} ya tiene datos; usa --limpiar para reemplazarlos.")
 
         conteos = {}
+        placas_vehiculos: dict[int, str | None] = {}
         for tabla, modelo in TABLAS:
             objetos = [
-                _crear_objeto(modelo, columnas, fila, avisos)
+                _crear_objeto(modelo, columnas, fila, avisos, placas_vehiculos)
                 for columnas, filas in por_tabla.get(tabla, [])
                 for fila in filas
             ]
             modelo.objects.bulk_create(objetos)
             conteos[tabla] = len(objetos)
+            if modelo is Vehiculo:
+                placas_vehiculos = dict(Vehiculo.objects.values_list("id_vehiculo", "placa"))
 
         with connection.cursor() as cursor:
             for sentencia in connection.ops.sequence_reset_sql(no_style(), [m for _, m in TABLAS]):
@@ -90,7 +93,8 @@ def importar(sql: str, limpiar: bool, avisos: list[str] | None = None) -> dict[s
     return conteos
 
 
-def _crear_objeto(modelo, columnas: list[str], fila: list, avisos: list[str]):
+def _crear_objeto(modelo, columnas: list[str], fila: list, avisos: list[str],
+                  placas_vehiculos: dict[int, str | None] | None = None):
     campos = {campo.column: campo for campo in modelo._meta.concrete_fields}
     datos = {}
     for columna, valor in zip(columnas, fila):
@@ -112,6 +116,19 @@ def _crear_objeto(modelo, columnas: list[str], fila: list, avisos: list[str]):
         datos["modelo"] = normalizar_modelo(datos.get("modelo"))
     elif modelo is Sensor and datos.get("nivel") is None:
         datos["nivel"] = 0
+    elif modelo in (Lectura, Alerta) and placas_vehiculos is not None:
+        vid = datos.get("vehiculo_id")
+        if vid is not None:
+            if vid in placas_vehiculos:
+                datos.setdefault("placa_historica", placas_vehiculos[vid])
+            else:
+                datos["vehiculo_id"] = None
+                aviso = (
+                    f"En {modelo._meta.db_table}: el vehículo Id_vehiculo={vid} no existe; "
+                    f"se importa el registro con vehiculo=NULL."
+                )
+                if aviso not in avisos:
+                    avisos.append(aviso)
     return modelo(**datos)
 
 
